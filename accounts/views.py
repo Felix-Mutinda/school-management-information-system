@@ -1,19 +1,28 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 from django.urls import reverse
-from django.views.generic import ListView
-from django.contrib.auth import get_user_model
+from django.views import View
+from django.views.generic import ListView, TemplateView
+from django.contrib.auth import (
+    get_user_model,
+    authenticate,
+    login,
+    logout
+)
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django import forms
+from django.utils.translation import gettext as _
 
-from .forms import RegisterUserForm
+from .forms import RegisterUserForm, StaffLoginForm
 
 User = get_user_model()
 
-@login_required
-def home(request):
+class HomeView(LoginRequiredMixin, TemplateView):
     '''
     Take the user to home/dashboard
     '''
-    return render(request, 'home.html', {})
+    template_name = 'home.html'
 
 @login_required
 def register_staff(request):
@@ -33,8 +42,7 @@ def register_staff(request):
         'user_form': form,
     })
 
-
-class ListStaffView(ListView):
+class ListStaffView(LoginRequiredMixin, ListView):
     '''
     A list of all the staff members.
     '''
@@ -43,4 +51,35 @@ class ListStaffView(ListView):
 
     def get_queryset(self):
         return User.objects.filter(is_staff=True)
+
+class StaffLoginView(View):
+    '''
+    Login the user. Must have is_staff = True.
+    '''
+    form_class = StaffLoginForm
+    template_name = 'accounts/staff_login.html'
+
+    def get(self, request, *args, **kwargs):
+        form = self.form_class()
+        return render(request, self.template_name, {
+            'form': form
+        })
     
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user:
+                if user.is_staff:
+                    login(request, user)
+                    return redirect(reverse('accounts:home'))
+                else:
+                    logout(request)
+                    form.add_error(field=None, error=forms.ValidationError(
+                        _('Please enter the correct username and password for a staff account. Note that both fields may be case-sensitive.'),
+                        code='forbiden'
+                    ))
+        return render(request, self.template_name, {'form': form})
+            
