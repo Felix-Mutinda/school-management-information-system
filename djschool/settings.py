@@ -114,3 +114,5 @@ STATIC_URL = '/static/'
 
 # extend the default User attributes/behaviour
 AUTH_USER_MODEL = 'accounts.User'
+
+LOGOUT_REDIRECT_URL = '/'

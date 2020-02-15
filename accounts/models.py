@@ -5,4 +5,5 @@ class User(AbstractUser):
     '''
     Extends the default auth model.
     '''
-    pass
+    middle_name = models.CharField(max_length=50, blank=True)
+    phone_number = models.CharField(max_length=50, blank=True)
