@@ -4,6 +4,11 @@ from django.contrib.auth import (
     authenticate,
 )
 
+from .models import (
+    StaffProfile,
+    StudentProfile
+)
+
 User = get_user_model()
 
 class StaffLoginForm(forms.Form):
@@ -33,3 +38,27 @@ class RegisterUserForm(forms.ModelForm):
             'email',
             'phone_number'
         ]
+
+class StaffProfileForm(forms.ModelForm):
+    class Meta:
+        model = StaffProfile
+        fields = [
+            'staff_id',
+            'position'
+        ]
+
+class StudentProfileForm(forms.ModelForm):
+    class Meta:
+        model = StudentProfile
+        fields = [
+            'reg_no',
+            'form',
+            'stream',
+            'kcpe_marks',
+            'house'
+        ]
+        error_messages = {
+            'reg_no': {
+                'unique': 'This registration number is already taken.'
+            }
+        }

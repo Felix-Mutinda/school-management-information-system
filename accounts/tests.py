@@ -7,7 +7,15 @@ from django_webtest import WebTest
 
 from .forms import (
     StaffLoginForm,
-    RegisterUserForm
+    RegisterUserForm,
+    StaffProfileForm,
+    StudentProfileForm,
+)
+
+from .models import (
+    StaffProfile,
+    StudentProfile,
+    GuardianProfile,
 )
 
 # get our custom user
@@ -17,33 +25,111 @@ STAFF_USERNAME = 'staff'
 PASSWORD = 'pass'
 PASSWORD2 = 'pass2'
 
-def create_user(username, password, commit=True):
+def create_user(username, password, is_staff=False, is_student=False, is_guardian=False):
     '''
-    Create a user with given username and password.
-    If commit is True, commit, otherwise don't.
+    Create a user with given username and password and set
+    the flags if provided.
     '''
-    user = User.objects.create_user(username=username)
+    user = User.objects.create_user(
+        username=username,
+        is_staff=is_staff,
+        is_student=is_student,
+        is_guardian=is_guardian
+    )
     user.set_password(password)
-    if commit:
-        user.save()
-    return user
-
-def create_staff_user(username, password):
-    '''
-    creates a staff user -> who can login, with
-    the given username and password.
-    '''
-    user = create_user(username=username, password=password, commit=False)
-    user.is_staff = True
     user.save()
     return user
 
+def create_profile(is_staff=False, is_student=False, is_guardian=False, *args, **kwargs):
+    '''
+    Create a profile based on the given flag i.e. if is_staff = True
+    create a staff profile. Otherwise return None.
+    '''
+    if is_staff:
+        return StaffProfile.objects.create(*args, **kwargs)
+    if is_student:
+        return StudentProfile.objects.create(*args, **kwargs)
+    if is_guardian:
+        return GuardianProfile.objects.create(*args, **kwargs)
+    return None
+
 def login_as_staff(test_client):
-    create_staff_user(username=STAFF_USERNAME, password=PASSWORD)
+    create_user(is_staff=True, username=STAFF_USERNAME, password=PASSWORD)
     test_client.login(username=STAFF_USERNAME, password=PASSWORD)
 
 class UserModelTests(TestCase):
-    pass
+    
+    def test_user_with_no_flags_set_and_no_profile(self):
+        '''
+        A user object with no explicity set profile should not
+        have access to any profile.
+        '''
+        user = create_user(username='no flags', password='pass')
+        self.assertFalse(hasattr(user, 'staff_profile'))
+        self.assertFalse(hasattr(user, 'student_profile'))
+        self.assertFalse(hasattr(user, 'guardian_profile'))
+    
+    def test_user_with_is_staff_true_and_a_staff_profile(self):
+        '''
+        A user with is_staff = True and a staff_profile should
+        have access to the staff_profile.
+        '''
+        staff_user = create_user(is_staff=True, username=STAFF_USERNAME, password=PASSWORD)
+        staff_profile = create_profile(
+            is_staff=True,
+            user=staff_user,
+            staff_id='id',
+            position='position'
+        )
+        self.assertTrue(hasattr(staff_user, 'staff_profile'))
+        self.assertEqual(staff_user.staff_profile.id, staff_profile.id)
+        self.assertEqual(staff_user.staff_profile.staff_id, 'id')
+        
+    def test_user_with_is_student_true_and_a_student_profile(self):
+        '''
+        A user with is_student = True and a student_profile should
+        have access to the student_profile.
+        '''
+        student_user = create_user(is_student=True, username='student', password='password')
+        student_profile = create_profile(
+            is_student=True,
+            user=student_user,
+            reg_no='reg_no',
+            form='2',
+            stream='south',
+            house='house'
+        )
+        self.assertTrue(hasattr(student_user, 'student_profile'))
+        self.assertEqual(student_user.student_profile.id, student_profile.id)
+        self.assertEqual(student_user.student_profile.reg_no, 'reg_no')
+    
+    def test_user_with_is_guardian_true_and_a_guardian_profile(self):
+        '''
+        A user with is_guardian = True and a guardian_profile should 
+        have access to the guardian profile.
+        '''
+        # create a student and  a student profile
+        student_user = create_user(is_student=True, username='student', password='pass')
+        student_profile = create_profile(
+            is_student=True,
+            user=student_user,
+            reg_no='reg_no',
+            form='2',
+            stream='north',
+            house='house'
+        )
+
+        # create a guardian and a guardian profile, then associate with above student
+        guardian_user = create_user(is_guardian=True, username='guardian', password='pass')
+        guardian_profile = create_profile(
+            is_guardian=True,
+            user=guardian_user,
+            student=student_profile
+        )
+        self.assertTrue(hasattr(guardian_user, 'guardian_profile'))
+        self.assertEqual(guardian_user.guardian_profile.id, guardian_profile.id)
+        self.assertEqual(guardian_user.guardian_profile.student, student_profile)
+
 
 class StaffLoginFormTests(TestCase):
 
@@ -82,7 +168,7 @@ class StaffLoginFormTests(TestCase):
         Filled username and password but don't match those in
         db.
         '''
-        staff = create_staff_user(username=STAFF_USERNAME, password=PASSWORD)
+        staff = create_user(is_staff=True, username=STAFF_USERNAME, password=PASSWORD)
         form = StaffLoginForm({
             'username': staff.username,
             'password': PASSWORD2
@@ -94,7 +180,7 @@ class StaffLoginFormTests(TestCase):
         '''
         Correctly filled form should be valid.
         '''
-        create_staff_user(username=STAFF_USERNAME, password=PASSWORD)
+        create_user(is_staff=True, username=STAFF_USERNAME, password=PASSWORD)
         form = StaffLoginForm({
             'username': STAFF_USERNAME,
             'password': PASSWORD
@@ -166,6 +252,79 @@ class RegisterUserFormTests(TestCase):
         self.assertEqual(staff.first_name, 'first_name')
         self.assertEqual(staff.last_name, 'last_name')
         self.assertEqual(staff.email, 'email@domain.com')
+
+class StaffProfileFormTests(TestCase):
+
+    def test_form_is_valid_with_no_data(self):
+        '''
+        Fields specific to a staff member are not 
+        mandatory.
+        '''
+        form = StaffProfileForm({})
+        self.assertTrue(form.is_valid())
+    
+    def test_form_is_valid_with_data(self):
+        '''
+        Fields are not mandatory.
+        '''
+        form = StaffProfileForm({
+            'staff_id': 'id',
+            'postition': 'staff'
+        })
+        self.assertTrue(form.is_valid())
+    
+class StudentProfileFormTests(TestCase):
+
+    def test_form_with_no_data(self):
+        '''
+        Registration number 'reg_no' is required and unique.
+        Form/class and stream are required.
+        '''
+        form = StudentProfileForm({})
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['reg_no'], ['This field is required.'])
+        self.assertEqual(form.errors['form'], ['This field is required.'])
+        self.assertEqual(form.errors['stream'], ['This field is required.'])
+
+    def test_form_with_form_stream_and_unique_reg_no(self):
+        '''
+        A unique reg_no, a form and a stream make up a valid student profile.
+        '''
+        form = StudentProfileForm({
+            'reg_no': '3594',
+            'form': '1',
+            'stream': 'east'
+        })
+        self.assertTrue(form.is_valid)
+        student_user = create_user(is_student=True, username='student', password='pass')
+        student_profile = form.save(commit=False)
+        student_profile.user = student_user
+        student_profile.save()
+        self.assertEqual(student_profile.reg_no, '3594')
+
+    def test_form_with_non_unique_reg_no(self):
+        '''
+        Reusing a reg_no raises a validation error.
+        '''
+        form1 = StudentProfileForm({
+            'reg_no': '3594',
+            'form': '2',
+            'stream': 'north'
+        })
+        self.assertTrue(form1.is_valid())
+        student_user = create_user(is_student=True, username='student', password='pass')
+        student_profile = form1.save(commit=False)
+        student_profile.user = student_user
+        student_profile.save()
+
+        form2 = StudentProfileForm({
+            'reg_no': '3594',
+            'form': '2',
+            'stream': 'west'
+        })
+        self.assertFalse(form2.is_valid())
+        self.assertEqual(form2.errors['reg_no'], ['This registration number is already taken.'])
+
 
 class RegisterStaffView(WebTest):
     # csrf_checks = False
@@ -272,7 +431,7 @@ class StaffLoginView(WebTest):
         Users with is_staff=True can login with their
         credentials.
         '''
-        create_staff_user(username=STAFF_USERNAME, password=PASSWORD)
+        create_user(is_staff=True, username=STAFF_USERNAME, password=PASSWORD)
         self.page.form['username'] = STAFF_USERNAME
         self.page.form['password'] = PASSWORD
         self.page = self.page.form.submit()
