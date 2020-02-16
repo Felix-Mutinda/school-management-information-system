@@ -369,7 +369,48 @@ class RegisterStaffView(WebTest):
         # page = self.app.post(self.register_staff_url, user='staff')
         page = page.form.submit().follow()
         self.assertContains(page, 'staff2')
-
+    
+    def test_staff_profile_fields_prompted(self):
+        '''
+        In addition to the user fields, additional fields specific to
+        a staff member are prompted.
+        '''
+        page = self.app.get(self.register_staff_url, user='staff')
+        self.assertTrue('staff_id' in page.form.fields)
+        self.assertTrue('position' in page.form.fields)
+    
+    def test_staff_profile_displayed_in_staff_list_page(self):
+        '''
+        In staff details 'staff_id' and 'position' have been 
+        submitted, they should reflect on the staff list page.
+        '''
+        page = self.app.get(self.register_staff_url, user='staff')
+        page.form['username'] = 'staff2'
+        page.form['password'] = 'pass'
+        page.form['staff_id'] = 'staff_id'
+        page.form['position'] = 'secretary'
+        page = page.form.submit().follow()
+        self.assertContains(page, 'staff_id')
+        self.assertContains(page, 'secretary')
+    
+    def test_register_staff_user_form_in_context(self):
+        '''
+        Register staff form should be passed in the context
+        for display.
+        '''
+        page = self.app.get(self.register_staff_url, user='staff')
+        self.assertTrue('user_form' in page.context)
+        self.assertTrue(isinstance(page.context['user_form'], RegisterUserForm))
+    
+    def test_register_staff_profile_form_in_context(self):
+        '''
+        Register staff profile form should be passed in the context
+        for display.
+        '''
+        page = self.app.get(self.register_staff_url, user='staff')
+        self.assertTrue('staff_profile_form' in page.context)
+        self.assertTrue(isinstance(page.context['staff_profile_form'], StaffProfileForm))
+    
 class StaffLoginView(WebTest):
 
     def setUp(self):

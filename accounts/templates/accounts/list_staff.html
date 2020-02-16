@@ -1,5 +1,24 @@
-{% for staff in staff_list %}
-    <p>
-        {{ staff.username }}
-    </p>
-{% endfor %}
+<table>
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Phone Number</th>
+            <th>Staff ID</th>
+            <th>Position</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for staff in staff_list %}
+        <tr>
+            <td>{{ staff.username }}</td>
+            <td>{{ staff.first_name }} {{ staff.middle_name }} {{ staff.last_name }}</td>
+            <td>{{ staff.email }}</td>
+            <td>{{ staff.phone_number }}</td>
+            <td>{{ staff.staff_profile.staff_id }}</td>
+            <td>{{ staff.staff_profile.position }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

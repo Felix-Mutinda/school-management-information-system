@@ -14,7 +14,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django import forms
 from django.utils.translation import gettext as _
 
-from .forms import RegisterUserForm, StaffLoginForm
+from .forms import (
+    RegisterUserForm,
+    StaffLoginForm,
+    StaffProfileForm
+)
 
 User = get_user_model()
 
@@ -27,19 +31,25 @@ class HomeView(LoginRequiredMixin, TemplateView):
 @login_required
 def register_staff(request):
     '''
-    Show a form to register staff, save it if it's valid.
+    Show a form to register staff(user and staff profile),
+    save it if it's valid.
     '''
-    form = RegisterUserForm(request.POST or None)
-    if form.is_valid():
-        user = form.save(commit=False)
-        password = form.cleaned_data.get('password')
+    user_form = RegisterUserForm(request.POST or None)
+    staff_profile_form = StaffProfileForm(request.POST or None)
+    if user_form.is_valid() and staff_profile_form.is_valid():
+        user = user_form.save(commit=False)
+        password = user_form.cleaned_data.get('password')
         user.set_password(password)
         user.is_staff = True
         user.save()
+        staff_profile = staff_profile_form.save(commit=False)
+        staff_profile.user = user
+        staff_profile.save()
         return redirect(reverse('accounts:list_staff'))
 
     return render(request, 'accounts/register_staff.html', {
-        'user_form': form,
+        'user_form': user_form,
+        'staff_profile_form': staff_profile_form
     })
 
 class ListStaffView(LoginRequiredMixin, ListView):
