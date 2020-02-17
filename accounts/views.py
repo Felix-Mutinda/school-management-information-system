@@ -17,7 +17,8 @@ from django.utils.translation import gettext as _
 from .forms import (
     RegisterUserForm,
     StaffLoginForm,
-    StaffProfileForm
+    StaffProfileForm,
+    RegisterStudentForm
 )
 
 User = get_user_model()
@@ -92,4 +93,28 @@ class StaffLoginView(View):
                         code='forbiden'
                     ))
         return render(request, self.template_name, {'form': form})
-            
+
+
+class RegisterStudentView(LoginRequiredMixin, View):
+    '''
+    Display a form to enter student data and those of a guardian.
+    Adds the given student and guardian together with their respective
+    profiles if they are valid.
+    '''
+    form_class = RegisterStudentForm
+    template_name = 'accounts/register_student.html'
+
+    def get(self, request, *args, **kwargs):
+        '''
+        Render the register student template.
+        '''
+        form = self.form_class()
+        return render(request, self.template_name, {'form': form})
+    
+    def post(self, request, *args, **kwargs):
+        '''
+        Construct a student_user, student_profile and a guardian_user
+        from the submitted form. Uses the created student_user to create
+        the guardian profile 
+        '''
+        pass

@@ -489,3 +489,50 @@ class StaffListViewTests(TestCase):
             response,
             reverse('accounts:login')+'?next='+reverse('accounts:list_staff')
         )
+
+class RegisterStudentViewTests(WebTest):
+
+    def setUp(self):
+        '''
+        Initialize the register student url.
+        '''
+        self.register_student_url = reverse('accounts:register_student')
+    
+    def test_requires_login(self):
+        '''
+        To access the view you must be an authenticated staff user.
+        '''
+        page = self.app.get(self.register_student_url)
+        self.assertRedirects(
+            page,
+            reverse('accounts:login')+'?next='+reverse('accounts:register_student')
+        )
+
+    def test_form_is_rendered(self):
+        '''
+        A form to enter student details and those of a guardian should
+        be displayed.
+        '''
+        page = self.app.get(self.register_student_url, user='staff')
+        self.assertEqual(len(page.forms), 1)
+
+    def test_all_form_fields_rendered(self):
+        '''
+        All the fields necessary to create a student_user, a student_profile
+        and a guardian_user should be shown to the page viewer.
+        '''
+        page = self.app.get(self.register_student_url, user='staff')
+        self.assertTrue('student_reg_no' in page.form.fields)
+        self.assertTrue('student_first_name' in page.form.fields)
+        self.assertTrue('student_middle_name' in page.form.fields)
+        self.assertTrue('student_last_name' in page.form.fields)
+        self.assertTrue('student_form' in page.form.fields)
+        self.assertTrue('student_stream' in page.form.fields)
+        self.assertTrue('student_house' in page.form.fields)
+        self.assertTrue('student_kcpe_marks' in page.form.fields)
+        self.assertTrue('guardian_first_name' in page.form.fields)
+        self.assertTrue('guardian_middle_name' in page.form.fields)
+        self.assertTrue('guardian_last_name' in page.form.fields)
+        self.assertTrue('guardian_phone_number' in page.form.fields)
+        self.assertTrue('guardian_email' in page.form.fields)
+    

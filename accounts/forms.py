@@ -62,3 +62,24 @@ class StudentProfileForm(forms.ModelForm):
                 'unique': 'This registration number is already taken.'
             }
         }
+
+class RegisterStudentForm(forms.Form):
+    '''
+    A student registration form. Accepts fields for student_user,
+    student_profile, guardian_user
+    '''
+    student_reg_no = forms.CharField()
+    student_first_name = forms.CharField()
+    student_middle_name = forms.CharField()
+    student_last_name = forms.CharField()
+    student_form = forms.IntegerField(min_value=1)
+    student_stream = forms.CharField()
+    student_house = forms.CharField()
+    student_kcpe_marks = forms.IntegerField(min_value=0)
+
+    guardian_first_name = forms.CharField()
+    guardian_middle_name = forms.CharField()
+    guardian_last_name = forms.CharField()
+    guardian_phone_number = forms.CharField()
+    guardian_email = forms.CharField()
+

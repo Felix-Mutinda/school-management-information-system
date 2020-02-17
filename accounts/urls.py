@@ -12,4 +12,5 @@ urlpatterns = [
 
     path('accounts/register/staff/', accounts_views.register_staff, name='register_staff'),
     path('accounts/staff/', accounts_views.ListStaffView.as_view(), name='list_staff'),
+    path('accounts/register/student/', accounts_views.RegisterStudentView.as_view(), name='register_student'),
 ]
