@@ -10,6 +10,7 @@ from .forms import (
     RegisterUserForm,
     StaffProfileForm,
     StudentProfileForm,
+    RegisterStudentForm
 )
 
 from .models import (
@@ -536,3 +537,87 @@ class RegisterStudentViewTests(WebTest):
         self.assertTrue('guardian_phone_number' in page.form.fields)
         self.assertTrue('guardian_email' in page.form.fields)
     
+    def test_form_with_no_data(self):
+        '''
+        Student reg_no, first name, last name, form and stream are
+        required. So a validation error is expected.
+        '''
+        page = self.app.get(self.register_student_url, user='staff')
+        page = page.form.submit()
+        self.assertContains(page, 'This field is required.')
+    
+    def test_form_with_required_fields(self):
+        '''
+        If all the required fields have been filled we should get
+        a Student successfully registered. No form errors should occur.
+        '''
+        page = self.app.get(self.register_student_url, user='staff')
+        page.form['student_reg_no'] = '33937'
+        page.form['student_first_name'] = 'first name'
+        page.form['student_last_name'] = 'last name'
+        page.form['student_form'] = '1'
+        page.form['student_stream'] = 'east'
+        # page.showbrowser()
+        page = page.form.submit().follow()
+        self.assertNotContains(page, 'This field is required.')
+        self.assertNotContains(page, 'This registration number is already taken.')
+        self.assertContains(page, 'Student successfully registered.')
+
+    def test_duplicate_student_reg_no(self):
+        '''
+        Student reg_no should be unique, if this is violated, expect
+        a form error.
+        '''
+        # first student instance
+        page = self.app.get(self.register_student_url, user='staff')
+        page.form['student_reg_no'] = '33937'
+        page.form['student_first_name'] = 'first name'
+        page.form['student_last_name'] = 'last name'
+        page.form['student_form'] = '1'
+        page.form['student_stream'] = 'east'
+        page = page.form.submit().follow()
+
+        # second student instance - since its a replica, 
+        # student_reg_no should report non uniqeuness violation
+        page.form['student_reg_no'] = '33937'
+        page.form['student_first_name'] = 'first name'
+        page.form['student_last_name'] = 'last name'
+        page.form['student_form'] = '1'
+        page.form['student_stream'] = 'east'
+        page = page.form.submit()
+        # should report the error on same page, i.e. 200 not 302(success)
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, 'This registration number is already taken.')
+
+
+class RegisterStudentFormTests(TestCase):
+    '''
+    Only concerns itself with required fields been filled.
+    '''
+
+    def test_form_with_no_data(self):
+        '''
+        The fields student_reg_no, _first_name, _last_name, _form and
+        _stream are required. Thus a form validation error should be
+        raised.
+        '''
+        form = RegisterStudentForm({})
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['student_reg_no'], ['This field is required.'])
+        self.assertEqual(form.errors['student_first_name'], ['This field is required.'])
+        self.assertEqual(form.errors['student_last_name'], ['This field is required.'])
+        self.assertEqual(form.errors['student_form'], ['This field is required.'])
+        self.assertEqual(form.errors['student_stream'], ['This field is required.'])
+    
+    def test_form_with_required_fields(self):
+        '''
+        This should not raise any required error.
+        '''
+        form = RegisterStudentForm({
+            'student_reg_no': '33937',
+            'student_first_name': 'first_name',
+            'student_last_name': 'last_name',
+            'student_form': '2',
+            'student_stream': 'east'
+        })
+        self.assertTrue(form.is_valid())

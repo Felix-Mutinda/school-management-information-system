@@ -30,7 +30,7 @@ class StudentProfile(models.Model):
     reg_no = models.CharField(max_length=20, unique=True)
     form = models.IntegerField(default=1)
     stream = models.CharField(max_length=20)
-    kcpe_marks = models.IntegerField(default=0, blank=True)
+    kcpe_marks = models.IntegerField(default=0, null=True, blank=True)
     house = models.CharField(max_length=20, blank=True)
 
     def __str__(self):

@@ -13,12 +13,17 @@ from django.contrib.auth import (
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django import forms
 from django.utils.translation import gettext as _
+from django.contrib import messages
 
 from .forms import (
     RegisterUserForm,
     StaffLoginForm,
     StaffProfileForm,
-    RegisterStudentForm
+    RegisterStudentForm,
+    StudentProfileForm
+)
+from .models import (
+    GuardianProfile,
 )
 
 User = get_user_model()
@@ -117,4 +122,57 @@ class RegisterStudentView(LoginRequiredMixin, View):
         from the submitted form. Uses the created student_user to create
         the guardian profile 
         '''
-        pass
+        # handles higher level validation
+        form = RegisterStudentForm(request.POST)
+        if form.is_valid():
+            student_user_form = RegisterUserForm({
+                'username': 'student_%s' % form.cleaned_data.get('student_reg_no'),
+                'first_name': form.cleaned_data.get('student_first_name'),
+                'middle_name': form.cleaned_data.get('student_middle_name'),
+                'last_name': form.cleaned_data.get('student_last_name'),
+                # password is required.
+                'password': '*',
+            })
+            student_profile_form = StudentProfileForm({
+                'reg_no': form.cleaned_data.get('student_reg_no'),
+                'form': form.cleaned_data.get('student_form'),
+                'stream': form.cleaned_data.get('student_stream'),
+                'house': form.cleaned_data.get('student_house'),
+                'kcpe_marks': form.cleaned_data.get('student_kcpe_marks')
+            })
+            guardian_user_form = RegisterUserForm({
+                'username': 'guardian_to_student_%s' % form.cleaned_data.get('student_reg_no'),
+                'first_name': form.cleaned_data.get('guardian_first_name'),
+                'middle_name': form.cleaned_data.get('guardian_middle_name'),
+                'last_name': form.cleaned_data.get('guardian_last_name'),
+                'phone_number': form.cleaned_data.get('guardian_phone_number'),
+                'email': form.cleaned_data.get('guardian_email'),
+                # password is required.
+                'password': '*',
+            })
+
+            if (student_user_form.is_valid() and
+                student_profile_form.is_valid() and
+                guardian_user_form.is_valid()):
+                
+                student_user = student_user_form.save(commit=False)
+                student_user.is_student = True
+                student_user.save()
+                student_profile = student_profile_form.save(commit=False)
+                student_profile.user = student_user
+                student_profile.save()
+                guardian_user = guardian_user_form.save(commit=False)
+                guardian_user.is_guardian = True
+                guardian_user.save()
+                guardian_profile = GuardianProfile.objects.create(
+                    user=guardian_user,
+                    student=student_profile
+                )
+                messages.success(request, 'Student successfully registered.')
+                return redirect(reverse('accounts:register_student'))
+
+            # assume that the forms were not valid because of duplicate
+            # student reg_no
+            form.add_error('student_reg_no', 'This registration number is already taken.')
+
+        return render(request, self.template_name, {'form': form})
