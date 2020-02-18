@@ -7,21 +7,21 @@ class Subject(models.Model):
     Represents all the subjects offered. e.g English,
     Mathematics, ...
     '''
-    name = models.CharField(max_length=20, unique=True)
+    name = models.CharField(max_length=20, null=False, blank=False, unique=True)
 
 class ExamType(models.Model):
     '''
     Represents all the exam types/categories offered.
     e.g Cat 1, Cat 2, Mid-term, ...
     '''
-    name = models.CharField(max_length=20, unique=True)
+    name = models.CharField(max_length=20, null=False, blank=False, unique=True)
 
 class Term(models.Model):
     '''
     Represents all the  terms/semesters in a year.
     e.g 1,2,3 or 1.1,1.2,1.3,... or a,b,c,...
     '''
-    name = models.CharField(max_length=20, unique=True)
+    name = models.CharField(max_length=20, null=False, blank=False, unique=True)
 
 class Exam(models.Model):
     '''

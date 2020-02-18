@@ -110,3 +110,33 @@ class ExamModelTests(TestCase):
         self.assertEqual(exam.term, term2)
         self.assertEqual(exam.date_done, date_done)
         self.assertEqual(exam.marks, marks)
+
+class SubjectModelTests(TestCase):
+
+    def test_create_null_subject_name(self):
+        '''
+        No null subject names are allowed.
+        '''
+        subject = Subject()
+        subject.name = None
+        self.assertRaises(IntegrityError, subject.save)
+
+class ExamTypeModelTests(TestCase):
+
+    def test_create_null_exam_type_name(self):
+        '''
+        No null subject names are allowed.
+        '''
+        exam_type = ExamType()
+        exam_type.name = None
+        self.assertRaises(IntegrityError, exam_type.save)
+
+class TermModelTests(TestCase):
+
+    def test_create_null_term_name(self):
+        '''
+        No null subject names are allowed.
+        '''
+        term = Term()
+        term.name = None
+        self.assertRaises(IntegrityError, term.save)
