@@ -1,6 +1,11 @@
+import datetime
+
 from django.test import TestCase
 from django.utils import timezone
 from django.db import IntegrityError
+from django.shortcuts import reverse
+
+from django_webtest import WebTest
 
 from accounts.tests import create_profile, create_user
 
@@ -9,6 +14,9 @@ from .models import (
     ExamType,
     Term,
     Exam
+)
+from .forms import (
+    CreateExamForm,
 )
 
 class ExamModelTests(TestCase):
@@ -32,7 +40,8 @@ class ExamModelTests(TestCase):
             reg_no='reg_no',
             form='2',
             stream='south',
-            house='house'
+            house='house',
+            date_registered=timezone.now()
         )
         subject = Subject.objects.create(name='Mathematics')
         exam_type = ExamType.objects.create(name='Mid-term')
@@ -67,7 +76,8 @@ class ExamModelTests(TestCase):
             reg_no='reg_no',
             form='2',
             stream='south',
-            house='house'
+            house='house',
+            date_registered=timezone.now(),
         )
         subject = Subject.objects.create(name='Mathematics')
         exam_type = ExamType.objects.create(name='Mid-term')
@@ -140,3 +150,112 @@ class TermModelTests(TestCase):
         term = Term()
         term.name = None
         self.assertRaises(IntegrityError, term.save)
+
+class CreateExamFormTests(TestCase):
+
+    def test_form_with_no_data(self):
+        '''
+        All fields of an exam object are required.
+        '''
+        exam_form = CreateExamForm({})
+        self.assertFalse(exam_form.is_valid())
+        self.assertEqual(exam_form.errors['exam_type_name'], ['This field is required.'])
+        self.assertEqual(exam_form.errors['date_done'], ['This field is required.'])
+        self.assertEqual(exam_form.errors['student_reg_no'], ['This field is required.'])
+        self.assertEqual(exam_form.errors['exam_type_name'], ['This field is required.'])
+        self.assertEqual(exam_form.errors['subject_name'], ['This field is required.'])
+        self.assertEqual(exam_form.errors['term_name'], ['This field is required.'])
+    
+    def test_form_with_partial_data(self):
+        '''
+        All fields required.
+        '''
+        exam_form = CreateExamForm({
+            'student_reg_no': '4576',
+            'marks': 50.0,
+            'term_name': 3
+        })
+        self.assertFalse(exam_form.is_valid())
+        self.assertEqual(exam_form.errors['subject_name'], ['This field is required.'])
+        self.assertEqual(exam_form.errors['exam_type_name'], ['This field is required.'])
+        self.assertEqual(exam_form.errors['date_done'], ['This field is required.'])
+
+    def test_form_with_all_fields_filled(self):
+        '''
+        Correctly filled form should not raise any 
+        validation errors.
+        '''
+        exam_form = CreateExamForm({
+            'student_reg_no': '3345',
+            'subject_name': 'Mathematics',
+            'exam_type_name': 'Mid-term',
+            'term_name': '3',
+            'date_done': timezone.now(),
+            'marks': 50.0,
+        })
+        self.assertTrue(exam_form.is_valid())
+
+class CreateOneExamViewTests(WebTest):
+    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types']
+
+    def setUp(self):
+        self.login_url = reverse('accounts:login')
+        self.create_one_exam_url = reverse('exam_module:create_one_exam')
+        # self.create_batch_exam_url = reverse('exam_module:create_batch_exam')
+
+    def test_requires_login(self):
+        '''
+        Should redirect to a login page is no logged in.
+        '''
+        page = self.app.get(self.create_one_exam_url)
+        self.assertRedirects(
+            page,
+            '%s?next=%s' %(self.login_url, self.create_one_exam_url)
+        )
+    
+    def test_form_is_rendered(self):
+        '''
+        Should be able to display the exam input form.
+        '''
+        page = self.app.get(self.create_one_exam_url, user='staff')
+        self.assertEqual(len(page.forms), 1)
+    
+    def test_submit_form_with_no_data(self):
+        '''
+        Required fields should raise validation error.
+        '''
+        page = self.app.get(self.create_one_exam_url, user='staff')
+        page = page.form.submit()
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, 'This field is required.')
+
+    def test_submit_form_with_data(self):
+        '''
+        Required fields should raise validation error.
+        '''
+        page = self.app.get(self.create_one_exam_url, user='staff')
+        page.form['student_reg_no'] = '2'
+        page.form['subject_name'] = 'Biology'
+        page.form['exam_type_name'] = 'CAT 2'
+        page.form['term_name'] = '3'
+        page.form['date_done'] =  datetime.datetime.now()
+        page.form['marks'] = 50.0
+        page = page.form.submit().follow()
+        self.assertContains(page, 'Data has been saved successfully.')
+
+class HomeViewTests(WebTest):  
+
+    def test_requires_login(self):
+        page = self.app.get(reverse('exam_module:home'))
+        self.assertRedirects(
+            page,
+            '%s?next=%s' %(reverse('accounts:login'), reverse('exam_module:home'))
+        )
+    
+    def test_home_displays_message(self):
+        '''
+        Should have a title Exam Module.
+        '''
+        page = self.app.get(reverse('exam_module:home'), user='staff')
+        self.assertTrue(page.status_code, 200)
+        self.assertContains(page, 'Exam Module.')

@@ -90,6 +90,9 @@ class StaffLoginView(View):
             if user:
                 if user.is_staff:
                     login(request, user)
+                    next = request.GET.get('next')
+                    if next:
+                        return redirect(next)
                     return redirect(reverse('accounts:home'))
                 else:
                     logout(request)
@@ -138,7 +141,8 @@ class RegisterStudentView(LoginRequiredMixin, View):
                 'form': form.cleaned_data.get('student_form'),
                 'stream': form.cleaned_data.get('student_stream'),
                 'house': form.cleaned_data.get('student_house'),
-                'kcpe_marks': form.cleaned_data.get('student_kcpe_marks')
+                'kcpe_marks': form.cleaned_data.get('student_kcpe_marks'),
+                'date_registered': form.cleaned_data.get('student_date_registered'),
             })
             guardian_user_form = RegisterUserForm({
                 'username': 'guardian_to_student_%s' % form.cleaned_data.get('student_reg_no'),

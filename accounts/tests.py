@@ -1,8 +1,12 @@
+import datetime
+
 from django.test import TestCase
 from django.contrib.auth import (
     get_user_model,
 )
 from django.urls import reverse
+from django.utils import timezone
+
 from django_webtest import WebTest
 
 from .forms import (
@@ -98,7 +102,8 @@ class UserModelTests(TestCase):
             reg_no='reg_no',
             form='2',
             stream='south',
-            house='house'
+            house='house',
+            date_registered=timezone.now()
         )
         self.assertTrue(hasattr(student_user, 'student_profile'))
         self.assertEqual(student_user.student_profile.id, student_profile.id)
@@ -117,7 +122,8 @@ class UserModelTests(TestCase):
             reg_no='reg_no',
             form='2',
             stream='north',
-            house='house'
+            house='house',
+            date_registered=timezone.now()
         )
 
         # create a guardian and a guardian profile, then associate with above student
@@ -209,7 +215,7 @@ class HomeViewTests(TestCase):
         response = self.client.get(reverse('accounts:home'))
         self.assertRedirects(
             response=response,
-            expected_url='/accounts/login/?next=/',
+            expected_url=reverse('accounts:login')+'?next='+reverse('accounts:home'),
         )
     
     def test_home_with_authenticated_user(self):
@@ -286,6 +292,7 @@ class StudentProfileFormTests(TestCase):
         self.assertEqual(form.errors['reg_no'], ['This field is required.'])
         self.assertEqual(form.errors['form'], ['This field is required.'])
         self.assertEqual(form.errors['stream'], ['This field is required.'])
+        self.assertEqual(form.errors['date_registered'], ['This field is required.'])
 
     def test_form_with_form_stream_and_unique_reg_no(self):
         '''
@@ -294,7 +301,8 @@ class StudentProfileFormTests(TestCase):
         form = StudentProfileForm({
             'reg_no': '3594',
             'form': '1',
-            'stream': 'east'
+            'stream': 'east',
+            'date_registered': timezone.now()
         })
         self.assertTrue(form.is_valid)
         student_user = create_user(is_student=True, username='student', password='pass')
@@ -310,7 +318,8 @@ class StudentProfileFormTests(TestCase):
         form1 = StudentProfileForm({
             'reg_no': '3594',
             'form': '2',
-            'stream': 'north'
+            'stream': 'north',
+            'date_registered': timezone.now()
         })
         self.assertTrue(form1.is_valid())
         student_user = create_user(is_student=True, username='student', password='pass')
@@ -321,7 +330,8 @@ class StudentProfileFormTests(TestCase):
         form2 = StudentProfileForm({
             'reg_no': '3594',
             'form': '2',
-            'stream': 'west'
+            'stream': 'west',
+            'date_registered': timezone.now()
         })
         self.assertFalse(form2.is_valid())
         self.assertEqual(form2.errors['reg_no'], ['This registration number is already taken.'])
@@ -531,6 +541,7 @@ class RegisterStudentViewTests(WebTest):
         self.assertTrue('student_stream' in page.form.fields)
         self.assertTrue('student_house' in page.form.fields)
         self.assertTrue('student_kcpe_marks' in page.form.fields)
+        self.assertTrue('student_date_registered' in page.form.fields)
         self.assertTrue('guardian_first_name' in page.form.fields)
         self.assertTrue('guardian_middle_name' in page.form.fields)
         self.assertTrue('guardian_last_name' in page.form.fields)
@@ -557,6 +568,7 @@ class RegisterStudentViewTests(WebTest):
         page.form['student_last_name'] = 'last name'
         page.form['student_form'] = '1'
         page.form['student_stream'] = 'east'
+        page.form['student_date_registered'] = datetime.datetime.now()
         # page.showbrowser()
         page = page.form.submit().follow()
         self.assertNotContains(page, 'This field is required.')
@@ -575,6 +587,7 @@ class RegisterStudentViewTests(WebTest):
         page.form['student_last_name'] = 'last name'
         page.form['student_form'] = '1'
         page.form['student_stream'] = 'east'
+        page.form['student_date_registered'] = datetime.datetime.now()
         page = page.form.submit().follow()
 
         # second student instance - since its a replica, 
@@ -584,6 +597,7 @@ class RegisterStudentViewTests(WebTest):
         page.form['student_last_name'] = 'last name'
         page.form['student_form'] = '1'
         page.form['student_stream'] = 'east'
+        page.form['student_date_registered'] = datetime.datetime.now()
         page = page.form.submit()
         # should report the error on same page, i.e. 200 not 302(success)
         self.assertEqual(page.status_code, 200)
@@ -608,6 +622,7 @@ class RegisterStudentFormTests(TestCase):
         self.assertEqual(form.errors['student_last_name'], ['This field is required.'])
         self.assertEqual(form.errors['student_form'], ['This field is required.'])
         self.assertEqual(form.errors['student_stream'], ['This field is required.'])
+        self.assertEqual(form.errors['student_date_registered'], ['This field is required.'])
     
     def test_form_with_required_fields(self):
         '''
@@ -618,6 +633,7 @@ class RegisterStudentFormTests(TestCase):
             'student_first_name': 'first_name',
             'student_last_name': 'last_name',
             'student_form': '2',
-            'student_stream': 'east'
+            'student_stream': 'east',
+            'student_date_registered': timezone.now()
         })
         self.assertTrue(form.is_valid())

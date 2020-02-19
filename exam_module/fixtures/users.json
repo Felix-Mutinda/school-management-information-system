@@ -1,0 +1,29 @@
+[
+    {
+        "model": "accounts.User",
+        "pk": 1,
+        "fields": {
+            "username": "user 1",
+            "is_staff": true,
+            "password": "*"
+        }
+    },
+    {
+        "model": "accounts.User",
+        "pk": 2,
+        "fields": {
+            "username": "user 2",
+            "is_student": true,
+            "password": "*"
+        }
+    },
+    {
+        "model": "accounts.User",
+        "pk": 3,
+        "fields": {
+            "username": "user 3",
+            "is_guardian": true,
+            "password": "*"
+        }
+    }
+]

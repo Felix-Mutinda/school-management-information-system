@@ -1,3 +1,4 @@
+import datetime
 from django import forms
 from django.contrib.auth import (
     get_user_model,
@@ -55,7 +56,8 @@ class StudentProfileForm(forms.ModelForm):
             'form',
             'stream',
             'kcpe_marks',
-            'house'
+            'house',
+            'date_registered'
         ]
         error_messages = {
             'reg_no': {
@@ -76,6 +78,7 @@ class RegisterStudentForm(forms.Form):
     student_stream = forms.CharField()
     student_house = forms.CharField(required=False)
     student_kcpe_marks = forms.IntegerField(min_value=0, required=False)
+    student_date_registered = forms.DateTimeField(initial=datetime.datetime.now())
 
     guardian_first_name = forms.CharField(required=False)
     guardian_middle_name = forms.CharField(required=False)

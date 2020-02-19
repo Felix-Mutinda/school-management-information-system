@@ -32,7 +32,8 @@ class StudentProfile(models.Model):
     stream = models.CharField(max_length=20)
     kcpe_marks = models.IntegerField(default=0, null=True, blank=True)
     house = models.CharField(max_length=20, blank=True)
-
+    date_registered = models.DateTimeField()
+    
     def __str__(self):
         return '%s\'s Profile' % self.user.first_name
 

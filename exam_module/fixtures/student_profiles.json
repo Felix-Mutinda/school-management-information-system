@@ -1,0 +1,28 @@
+[
+    {
+        "model": "accounts.StudentProfile",
+        "pk": 2,
+        "fields": {
+            "user": 1,
+            "form": 1,
+            "stream": "east",
+            "reg_no": "1",
+            "house": "house 1",
+            "date_registered": "2020-02-18 22:33:00",
+            "kcpe_marks": 1
+        }
+    },
+    {
+        "model": "accounts.StudentProfile",
+        "pk": 2,
+        "fields": {
+            "user": 2,
+            "form": 1,
+            "stream": "west",
+            "reg_no": "2",
+            "house": "house 1",
+            "date_registered": "2020-02-18 22:33:00",
+            "kcpe_marks": 1
+        }
+    }
+]

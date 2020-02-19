@@ -1,0 +1,37 @@
+[
+    {
+        "model": "exam_module.Subject",
+        "pk": 1,
+        "fields": {
+            "name": "Mathematics"
+        }
+    },
+    {
+        "model": "exam_module.Subject",
+        "pk": 2,
+        "fields": {
+            "name": "English"
+        }
+    },
+    {
+        "model": "exam_module.Subject",
+        "pk": 3,
+        "fields": {
+            "name": "Kiswahili"
+        }
+    },
+    {
+        "model": "exam_module.Subject",
+        "pk": 4,
+        "fields": {
+            "name": "Biology"
+        }
+    },
+    {
+        "model": "exam_module.Subject",
+        "pk": 5,
+        "fields": {
+            "name": "Python"
+        }
+    }
+]

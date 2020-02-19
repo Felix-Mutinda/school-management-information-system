@@ -1,0 +1,10 @@
+<form method="post">
+    {% if messages %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+    {% csrf_token %}
+    {{ exam_form.as_p }}
+    <input type="submit" value="Save">
+</form>
