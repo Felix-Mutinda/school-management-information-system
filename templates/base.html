@@ -1,13 +1,66 @@
-<!DOCTYPE html>
+{% load static %}
+{% load crispy_forms_tags %}
+
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Management System</title>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>SMIS</title>
+    
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+
+    <!-- Favicons -->
+    
+    <meta name="theme-color" content="#563d7c">
+
+
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+    </style>
+
+    <!-- Custom styles for this template -->
+    <link href="{% static 'css/dashboard.css' %}" rel="stylesheet">
+
+    {% block style %}
+    {% endblock style %}
+
 </head>
 <body>
     
     {% block content %}
     {% endblock content %}
+
+    <!-- jQuery -->
+    <script src="{% static 'js/jquery.js' %}"></script>
+
+    <!-- Bootstrap bundle min -->
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+
+    <!-- Cloudfare feather-icons -->
+    <script src="{% static 'js/feather.min.js' %}"></script>
+
+    <!-- Cloudfare chart js -->
+    <script src="{% static 'js/chart.min.js' %}"></script>
+
+    <!-- Custom js for this template -->
+    <script src="{% static 'js/dashboard.js' %}"></script>
+
+    {% block script %}
+    {% endblock script %}
 </body>
 </html>

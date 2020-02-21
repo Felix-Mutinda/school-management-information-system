@@ -5,6 +5,9 @@ from django.contrib.auth import (
     authenticate,
 )
 
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Submit, HTML, Field
+
 from .models import (
     StaffProfile,
     StudentProfile
@@ -13,6 +16,30 @@ from .models import (
 User = get_user_model()
 
 class StaffLoginForm(forms.Form):
+
+    def __init__(self, *args, **kwargs):
+        super(StaffLoginForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-signin'
+        self.helper.form_method = 'post'
+        self.helper.form_action = 'accounts:login'
+        self.helper.layout = Layout(
+            HTML(
+                '''
+                <img src="/static/img/logo2.jpg" alt="logo" width="120px" height="100px">
+                <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
+                '''
+            ),
+            Field('username', placeholder='Username', autofocus='autofocus', autocomplete='off'),
+            Field('password', placeholder='Password'),
+            Submit('submit', 'Login', css_class='btn-lg btn-block'),
+            HTML(
+                '''
+                <p class="mt-5 mb-3 text-muted">&copy; 2020</p>
+                '''
+            ),
+        )
+    
     username = forms.CharField()
     password = forms.CharField(widget=forms.PasswordInput)
 

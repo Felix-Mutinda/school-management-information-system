@@ -1,5 +1,17 @@
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_table }}
-    <input type="submit" value="Login">
-</form>
+{% extends 'base.html' %}
+
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block style %}
+    <!-- Custom styles for this template -->
+    <link href="{% static 'accounts/css/signin.css' %}" rel="stylesheet">
+{% endblock style %}
+
+{% block content %}
+    {% crispy form %}
+{% endblock content %}
+
+{% block script %}
+    <script src="{% static 'accounts/js/signin.js' %}"></script>
+{% endblock script %}
