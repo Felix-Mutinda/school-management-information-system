@@ -1,7 +1,18 @@
+{% extends 'dashboard.html' %}
 
-<form method="post">
-    {% csrf_token %}
-    {{ user_form.as_p }}
-    {{ staff_profile_form.as_p }}
-    <input type="submit" value="Register Staff">
-</form>
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block dashboard_content %}
+    <div class="row">
+        <div class="col-md-6 m-3">
+            <form method="post">
+                {% csrf_token %}
+                {{ user_form | crispy }}
+                {{ staff_profile_form | crispy }}
+                <input type="submit" value="Register Staff" class="btn btn-primary">
+            </form>
+        </div>
+        
+    </div>
+{% endblock dashboard_content %}

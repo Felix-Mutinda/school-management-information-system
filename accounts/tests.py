@@ -212,10 +212,10 @@ class HomeViewTests(TestCase):
         '''
         If no logged in user, redirect to accounts/login.
         '''
-        response = self.client.get(reverse('accounts:home'))
+        response = self.client.get(reverse('accounts:dashboard'))
         self.assertRedirects(
             response=response,
-            expected_url=reverse('accounts:login')+'?next='+reverse('accounts:home'),
+            expected_url=reverse('accounts:login')+'?next='+reverse('accounts:dashboard'),
         )
     
     def test_home_with_authenticated_user(self):
@@ -224,9 +224,9 @@ class HomeViewTests(TestCase):
         is authenticated.
         '''
         login_as_staff(self.client)
-        response = self.client.get(reverse('accounts:home'))
+        response = self.client.get(reverse('accounts:dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Home')
+        self.assertContains(response, 'Dashboard')
 
 class RegisterUserFormTests(TestCase):
 
@@ -487,7 +487,7 @@ class StaffLoginView(WebTest):
         self.page.form['username'] = STAFF_USERNAME
         self.page.form['password'] = PASSWORD
         self.page = self.page.form.submit()
-        self.assertRedirects(self.page, reverse('accounts:home'))
+        self.assertRedirects(self.page, reverse('accounts:dashboard'))
 
 class StaffListViewTests(TestCase):
 

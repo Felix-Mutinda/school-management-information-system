@@ -1,4 +1,8 @@
-<table>
+{% extends 'dashboard.html' %}
+
+{% block dashboard_content %}
+<div class="table-responsive mt-2">
+    <table class="table table-striped table-sm">
     <thead>
         <tr>
             <th>Username</th>
@@ -21,4 +25,6 @@
         </tr>
         {% endfor %}
     </tbody>
-</table>
+    </table>
+</div>
+{% endblock dashboard_content %}

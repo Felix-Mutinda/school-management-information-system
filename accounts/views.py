@@ -30,9 +30,9 @@ User = get_user_model()
 
 class HomeView(LoginRequiredMixin, TemplateView):
     '''
-    Take the user to home/dashboard
+    Take the user to dashboard
     '''
-    template_name = 'home.html'
+    template_name = 'dashboard.html'
 
 @login_required
 def register_staff(request):
@@ -93,7 +93,7 @@ class StaffLoginView(View):
                     next = request.GET.get('next')
                     if next:
                         return redirect(next)
-                    return redirect(reverse('accounts:home'))
+                    return redirect(reverse('accounts:dashboard'))
                 else:
                     logout(request)
                     form.add_error(field=None, error=forms.ValidationError(
