@@ -5,12 +5,16 @@
 
 {% block dashboard_content %}
     <div class="row">
-        <div class="col-md-6 m-3">
+        <div class="col-md-10 m-3">
             <form method="post">
-                {% csrf_token %}
-                {{ user_form | crispy }}
-                {{ staff_profile_form | crispy }}
-                <input type="submit" value="Register Staff" class="btn btn-primary">
+                <fieldset class="border p-3 rounded">
+                    <legend>Register A Staff Member</legend>
+                    {% csrf_token %}
+                    {% crispy user_form %}
+                    {% crispy staff_profile_form %}
+                    <input type="submit" value="Register Staff" class="btn btn-primary">
+                </fieldset>
+               
             </form>
         </div>
         

@@ -6,7 +6,7 @@ from django.contrib.auth import (
 )
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit, HTML, Field
+from crispy_forms.layout import Layout, Submit, HTML, Field, Fieldset, Div
 
 from .models import (
     StaffProfile,
@@ -55,6 +55,29 @@ class StaffLoginForm(forms.Form):
 class RegisterUserForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)
 
+    def __init__(self, *args, **kwargs):
+        super(RegisterUserForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Div(
+                Field('username', wrapper_class='col'),
+                Field('password', wrapper_class='col'),
+                css_class='form-row',
+            ),
+            Div(
+                Field('first_name', wrapper_class='col'),
+                Field('middle_name', wrapper_class='col'),
+                Field('last_name', wrapper_class='col'),
+                css_class='form-row',
+            ),
+            Div(
+                Field('phone_number', wrapper_class='col'),
+                Field('email', wrapper_class='col'),
+                css_class='form-row',
+            ),
+        )
+
     class Meta:
         model = User
         fields = [
@@ -68,6 +91,18 @@ class RegisterUserForm(forms.ModelForm):
         ]
 
 class StaffProfileForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(StaffProfileForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Div(
+                Field('staff_id', wrapper_class='col'),
+                Field('position', wrapper_class='col'),
+                css_class='form-row',
+            )
+        )
+
     class Meta:
         model = StaffProfile
         fields = [
@@ -97,19 +132,75 @@ class RegisterStudentForm(forms.Form):
     A student registration form. Accepts fields for student_user,
     student_profile, guardian_user
     '''
-    student_reg_no = forms.CharField()
-    student_first_name = forms.CharField()
-    student_middle_name = forms.CharField(required=False)
-    student_last_name = forms.CharField()
-    student_form = forms.IntegerField(min_value=1)
-    student_stream = forms.CharField()
-    student_house = forms.CharField(required=False)
-    student_kcpe_marks = forms.IntegerField(min_value=0, required=False)
-    student_date_registered = forms.DateTimeField(initial=datetime.datetime.now())
+    def __init__(self, *args, **kwargs):
+        super(RegisterStudentForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.form_action = 'accounts:register_student'
+        self.helper.form_class = 'form-register-student'
+        self.helper.layout = Layout(
+            Fieldset(
+                'Register Student',
+                HTML(
+                    '''
+                    {% include '_messages.html' %}
+                    '''
+                ),
+                Fieldset(
+                    'Student Details',
+                    Field('student_reg_no', autofocus='autofocus'),
+                    Div(
+                        Field('student_first_name', wrapper_class='col'),
+                        Field('student_middle_name', wrapper_class='col'),
+                        Field('student_last_name', wrapper_class='col'),
+                        css_class='form-row',
+                    ),
+                    Div(
+                        Field('student_form', wrapper_class='col'),
+                        Field('student_stream', wrapper_class='col'),
+                        Field('student_house', wrapper_class='col'),
+                        css_class='form-row',
+                    ),
+                    Div(
+                        Field('student_kcpe_marks', wrapper_class='col'),
+                        Field('student_date_registered', wrapper_class='col'),
+                        css_class='form-row',
+                    ),
+                    css_class='p-2 mb-2 border rounded',
+                ),
+                Fieldset(
+                    'Parent/Guardian Details',
+                    Div(
+                        Field('guardian_first_name', wrapper_class='col'),
+                        Field('guardian_middle_name', wrapper_class='col'),
+                        Field('guardian_last_name', wrapper_class='col'),
+                        css_class='form-row',
+                    ),
+                    Div(
+                        Field('guardian_phone_number', wrapper_class='col'),
+                        Field('guardian_email', wrapper_class='col'),
+                        css_class='form-row',
+                    ),
+                    css_class='p-2 mb-2 border rounded',
+                ),
+                Submit('submit', 'Save Details', css_class='btn btn-primary'),
+                css_class='p-3 border rounded',
+            ),
+        )
 
-    guardian_first_name = forms.CharField(required=False)
-    guardian_middle_name = forms.CharField(required=False)
-    guardian_last_name = forms.CharField(required=False)
-    guardian_phone_number = forms.CharField(required=False)
-    guardian_email = forms.CharField(required=False)
 
+    student_reg_no = forms.CharField(label='Registration/ Admission Number')
+    student_first_name = forms.CharField(label='First Name')
+    student_middle_name = forms.CharField(label='Middle Name', required=False)
+    student_last_name = forms.CharField(label='Sir Name')
+    student_form = forms.IntegerField(label='Form/ Class', min_value=1)
+    student_stream = forms.CharField(label='Stream')
+    student_house = forms.CharField(label='Domitory/ House', required=False)
+    student_kcpe_marks = forms.IntegerField(label='KCPE Marks', min_value=0, required=False)
+    student_date_registered = forms.DateTimeField(label='Date Registered', initial=datetime.datetime.now())
+
+    guardian_first_name = forms.CharField(label='First Name', required=False)
+    guardian_middle_name = forms.CharField(label='Middle Name', required=False)
+    guardian_last_name = forms.CharField(label='Sir Name', required=False)
+    guardian_phone_number = forms.CharField(label='Phone Number', required=False)
+    guardian_email = forms.CharField(label='Email', required=False)

@@ -122,7 +122,18 @@ STATICFILES_DIRS = [
 # extend the default User attributes/behaviour
 AUTH_USER_MODEL = 'accounts.User'
 
-LOGOUT_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = 'accounts:dashboard'
 
 # Django Crispy Forms
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
+# use bootstrap friendly message tags
+from django.contrib.messages import constants as messages
+
+MESSAGE_TAGS = {
+    messages.DEBUG: 'alert-info',
+    messages.INFO:  'alert-info',
+    messages.WARNING: 'alert-warning',
+    messages.SUCCESS: 'alert-success',
+    messages.ERROR: 'alert-danger',
+}
