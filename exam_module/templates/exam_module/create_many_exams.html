@@ -1,0 +1,40 @@
+{% extends 'dashboard.html' %}
+
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block dashboard_content %}
+    <div class="row">
+        <div class="col-md-10 m-3">
+            {% crispy create_many_exams_filter_form %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col m-3">
+            <div class="table-responsive">
+            <table class="table table-striped table-sm border rounded">
+                <thead>
+                    <tr>
+                        <th>Registration Number</th>
+                        <th>Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students_list %}
+                        <tr>
+                            <td>{{ student.reg_no }}</td>
+                            <td>{{ student.user.first_name }} {{ student.user.middle_name }} {{ student.user.last_name }}</td>
+                        </tr>
+                    {% empty %}
+                    <tr>
+                        <td class="text-muted" colspan="2"><em>User appropriate filters to generate students.</em></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+            
+        </div>
+    </div>
+{% endblock dashboard_content %}

@@ -25,5 +25,15 @@
             "is_guardian": true,
             "password": "*"
         }
+    },
+    {
+        "model": "accounts.User",
+        "pk": 4,
+        "fields": {
+            "username": "user 4",
+            "is_student": true,
+            "password": "*",
+            "first_name": "User 4"
+        }
     }
 ]

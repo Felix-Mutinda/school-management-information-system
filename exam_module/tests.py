@@ -259,7 +259,7 @@ class HomeViewTests(WebTest):
         '''
         page = self.app.get(reverse('exam_module:home'), user='staff')
         self.assertTrue(page.status_code, 200)
-        self.assertContains(page, 'Exam Module.')
+        self.assertContains(page, 'Exams')
 
 class CreateManyExamsFilterFormTests(TestCase):
 
@@ -317,6 +317,162 @@ class CreateManyExamsFilterFormTests(TestCase):
             'subject_name': 'Mathematics',
             'exam_type_name': 'End Term',
             'term_name': '3',
-            'date_done': datetime.datetime.now(),
+            'date_done': timezone.now(),
         })
-        self.assertFalse(form.is_valid())
+        self.assertTrue(form.is_valid())
+
+class CreateManyExamsFilterViewTests(WebTest):
+
+    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types']
+
+    def setUp(self):
+        self.create_many_exams_filter_url = reverse('exam_module:create_many_exams_filter')
+        self.create_many_exams_url = reverse('exam_module:create_many_exams')
+        self.login_url = reverse('accounts:login')
+
+    def test_requires_login(self):
+        '''
+        Only authenticated users an access this view
+        '''
+        page = self.app.get(self.create_many_exams_filter_url)
+        self.assertRedirects(
+            page,
+            self.login_url+'?next='+self.create_many_exams_filter_url
+        )
+    
+    def test_redirects_to_create_many_exams_url(self):
+        '''
+        The filter form is embed in create_many_exams.html template.
+        A get request to create_many_exams_filter redirects there.
+        '''
+        page = self.app.get(self.create_many_exams_filter_url, user='staff')
+        self.assertRedirects(
+            page,
+            self.create_many_exams_url,
+        )
+
+    
+    def test_filter_view_with_no_data(self):
+        '''
+        All filter form values are required to generate students.
+        '''
+        page = self.app.get(self.create_many_exams_url, user='staff')
+        filter_form = page.forms['filter-exams-form']
+        page = filter_form.submit()
+        self.assertContains(page, 'This field is required.')
+
+    def test_filter_view_with_invalid_data(self):
+        '''
+        If data generates no student list, get an error response,
+        also unknown subjects, exam_types, terms also result in error.
+        '''
+        page = self.app.get(self.create_many_exams_url, user='staff')
+        filter_form = page.forms['filter-exams-form']
+        filter_form['form'] = 6
+        filter_form['stream'] = 'unknown'
+        filter_form['subject_name'] = 'unknown'
+        filter_form['exam_type_name'] = 'unknown'
+        filter_form['term_name'] = 'unknown'
+        filter_form['date_done'] = datetime.datetime.now()
+        page = filter_form.submit()
+        self.assertContains(
+            page,
+            'There are no students found in form %s %s in the year %s.' %(
+                6,
+                'unknown',
+                datetime.datetime.now().year,
+            )
+        )
+        self.assertContains(page, 'This subject is not found.')
+        self.assertContains(page, 'This exam type is not found.')
+        self.assertContains(page, 'This term is not found.')
+    
+    def test_filter_view_with_valid_data(self):
+        '''
+        Correct filters should return the student list, no errors.
+        '''
+        page = self.app.get(self.create_many_exams_url, user='staff')
+        filter_form = page.forms['filter-exams-form']
+        filter_form['form'] = 4
+        filter_form['stream'] = 'north'
+        filter_form['subject_name'] = 'Python'
+        filter_form['exam_type_name'] = 'CAT 2'
+        filter_form['term_name'] = '2'
+        filter_form['date_done'] = datetime.datetime.now()
+        page = filter_form.submit()
+        self.assertNotContains(
+            page,
+            'There are no students found in form %s %s in the year %s.' %(
+                4,
+                'north',
+                datetime.datetime.now().year,
+            )
+        )
+        self.assertNotContains(page, 'This subject is not found.')
+        self.assertNotContains(page, 'This exam type is not found.')
+        self.assertNotContains(page, 'This term is not found.')
+        self.assertTrue(page.context['students_list'] != [])
+
+class CreateManyExamsViewTests(WebTest):
+
+    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types']
+
+    def setUp(self):
+        self.create_many_exams_filter_url = reverse('exam_module:create_many_exams_filter')
+        self.create_many_exams_url = reverse('exam_module:create_many_exams')
+        self.login_url = reverse('accounts:login')
+
+    def test_requires_login(self):
+        '''
+        Only authenticated users an access this view
+        '''
+        page = self.app.get(self.create_many_exams_url)
+        self.assertRedirects(
+            page,
+            self.login_url+'?next='+self.create_many_exams_url
+        )
+
+    def test_filter_form_is_rendered(self):
+        '''
+        Show form to authenticated users to fill.
+        '''
+        page = self.app.get(self.create_many_exams_url, user='staff')
+        self.assertTrue(len(page.forms) >= 1)
+        self.assertEqual(page.forms[0].id, 'filter-exams-form')
+    
+    def test_filter_with_invalid_data(self):
+        '''
+        Incorrect combination of filter tags should return an empty
+        students_list.
+        '''
+        page = self.app.get(self.create_many_exams_url, user='staff')
+        filter_form = page.forms['filter-exams-form']
+        filter_form['form'] = 8
+        filter_form['stream'] = 'unknown'
+        filter_form['subject_name'] = 'unknown'
+        filter_form['exam_type_name'] = 'unknown'
+        filter_form['term_name'] = 'unknown'
+        filter_form['date_done'] = datetime.datetime.now()
+        page = filter_form.submit()
+        self.assertEqual(page.context['students_list'], [])
+    
+    def test_filter_with_valid_data(self):
+        '''
+        Correct combination of filter tags should return a non-empty
+        students_list.
+        '''
+        page = self.app.get(self.create_many_exams_url, user='staff')
+        filter_form = page.forms['filter-exams-form']
+        filter_form['form'] = 4
+        filter_form['stream'] = 'north'
+        filter_form['subject_name'] = 'Python'
+        filter_form['exam_type_name'] = 'CAT 2'
+        filter_form['term_name'] = '2'
+        filter_form['date_done'] = datetime.datetime.now()
+        page = filter_form.submit()
+        self.assertEqual(len(page.context['students_list']), 1)
+        student_profile = page.context['students_list'][0]
+        self.assertContains(
+            page,
+            student_profile.user.first_name + student_profile.user.middle_name + student_profile.user.last_name,
+        )

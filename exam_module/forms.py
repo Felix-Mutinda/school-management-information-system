@@ -1,5 +1,15 @@
 from django import forms
 
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import (
+    Layout,
+    Div,
+    Field,
+    Submit,
+    Fieldset,
+    HTML,
+)
+
 from accounts.models import (
     StudentProfile,
 )
@@ -22,6 +32,36 @@ class CreateExamForm(forms.Form):
     date_done = forms.DateTimeField()
     marks = forms.DecimalField(max_digits=4, decimal_places=2)
 
+    def __init__(self, *args, **kwargs):
+        super(CreateExamForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.form_action = 'exam_module:create_one_exam'
+        self.helper.layout = Layout(
+            Fieldset(
+                'Student Exam Entry',
+                HTML(
+                    '''
+                    {% include '_messages.html' %}
+                    '''
+                ),
+                Field('student_reg_no', autofocus='autofocues'),
+                Div(
+                    Field('subject_name', wrapper_class='col'),
+                    Field('exam_type_name', wrapper_class='col'),
+                    css_class='form-row',
+                ),
+                Div(
+                    Field('term_name', wrapper_class='col'),
+                    Field('date_done', wrapper_class='col'),
+                    css_class='form-row',
+                ),
+                Field('marks'),
+                Submit('submit', 'Save', css_class='btn btn-primary'),
+                css_class='p-3 border rounded',
+            )
+        )
+
 class CreateManyExamsFilterForm(forms.Form):
     '''
     Fields used to retrieve a group of students for 
@@ -29,10 +69,39 @@ class CreateManyExamsFilterForm(forms.Form):
     '''
     form = forms.IntegerField()
     stream = forms.CharField()
-    subject_name = forms.CharField()
-    exam_type_name = forms.CharField()
-    term_name = forms.CharField()
-    date_done = forms.DateTimeField()
+    subject_name = forms.CharField(label='Subject')
+    exam_type_name = forms.CharField(label='Exam Type')
+    term_name = forms.CharField(label='Term')
+    date_done = forms.DateTimeField(label='Date Done')
+
+    def __init__(self, *args, **kwargs):
+        '''
+        Initialize crispy form helper
+        '''
+        super(CreateManyExamsFilterForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.form_action = 'exam_module:create_many_exams_filter'
+        self.helper.form_id = 'filter-exams-form'
+        self.helper.layout = Layout(
+            Div(
+                Field('form', wrapper_class='col'),
+                Field('stream', wrapper_class='col'),
+                Field('subject_name', wrapper_class='col'),
+                css_class='form-row',
+            ),
+            Div(
+                Field('exam_type_name', wrapper_class='col'),
+                Field('term_name', wrapper_class='col'),
+                Field('date_done', wrapper_class='col'),
+                css_class='form-row',
+            ),
+            Submit(
+                'submit',
+                'Filter',
+                css_class='btn btn-primary',
+            ),
+        )
 
     def clean_subject_name(self):
         '''

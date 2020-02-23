@@ -7,15 +7,7 @@
 {% block dashboard_content %}
     <div class="row">
         <div class="col-md-6 m-3">
-            <form method="post">
-                <fieldset class="p-3 border rounded">
-                    <legend>Student Exam Entry</legend>
-                    {% include '_messages.html' %}
-                    {% csrf_token %}
-                    {{ exam_form | crispy }}
-                    <input type="submit" value="Save" class="btn btn-primary">
-                </fieldset>
-            </form>
+            {% crispy exam_form %}
         </div>
         
     </div>

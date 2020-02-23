@@ -7,7 +7,8 @@ from django.contrib import messages
 from accounts.models import StudentProfile
 
 from .forms import (
-    CreateExamForm
+    CreateExamForm,
+    CreateManyExamsFilterForm,
 )
 from .models import (
     Subject,
@@ -70,3 +71,51 @@ class CreateOneExamView(LoginRequiredMixin, View):
                 return redirect(reverse('exam_module:create_one_exam'))
 
         return render(request, self.template_name, {'exam_form': exam_form})
+
+class CreateManyExamsFilterView(LoginRequiredMixin, View):
+    '''
+    Apply filters to generate a list of students for a batch exam
+    entry.
+    '''
+    form_class = CreateManyExamsFilterForm
+    template_name = 'exam_module/create_many_exams.html'
+
+    def get(self, request, *args, **kwargs):
+        return redirect(reverse('exam_module:create_many_exams'))
+
+        
+    def post(self, request, *args, **kwargs):
+        create_many_exams_filter_form = self.form_class(request.POST)
+        if create_many_exams_filter_form.is_valid():
+            form = create_many_exams_filter_form.cleaned_data.get('form')
+            stream = create_many_exams_filter_form.cleaned_data.get('stream')
+            date_done = create_many_exams_filter_form.cleaned_data.get('date_done')
+            year_since_registration = date_done.year
+            query_set = StudentProfile.objects.filter(stream=stream)
+            student_list = [s for s in query_set if s.get_form(year_since_registration) == form]
+            return render(request, self.template_name, {
+                'create_many_exams_filter_form': create_many_exams_filter_form,
+                'students_list': student_list,
+            })
+        return render(request, self.template_name, {
+            'create_many_exams_filter_form': create_many_exams_filter_form,
+            'students_list': []
+        })
+
+class CreateManyExamsView(LoginRequiredMixin, View):
+    '''
+    Renders a filter form to get the students. To each student
+    there corresponds a form to input an exam object.
+    If valid this exam objects are populated in db.
+    '''
+
+    template_name = 'exam_module/create_many_exams.html'
+    
+    def get(self, request, *args, **kwargs):
+        create_many_exams_filter_form = CreateManyExamsFilterForm()
+        return render(request, self.template_name, {
+            'create_many_exams_filter_form': create_many_exams_filter_form,
+        })
+
+    def post(self, request, *args, **kwargs):
+        pass
