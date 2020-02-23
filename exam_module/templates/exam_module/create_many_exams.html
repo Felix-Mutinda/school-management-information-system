@@ -34,19 +34,31 @@
                     <tr>
                         <th>Registration Number</th>
                         <th>Name</th>
+                        <th>Marks</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for student in students_list %}
+                    {% if students_list_with_marks %}
+                        <form method="POST" action="{% url 'exam_module:create_many_exams' %}" id='students-exams-entry-form'>
+                            {% csrf_token %}
+                            {% for student in students_list_with_marks %}
+                                <tr>
+                                    <td>{{ student.0.reg_no }}</td>
+                                    <td>{{ student.0.user.first_name }} {{ student.0.user.middle_name }} {{ student.0.user.last_name }}</td>
+                                    <td>
+                                        <input type="number" name="{{ student.0.reg_no }}_marks" id="id_{{ student.0.reg_no }}_marks" value="{{ student.1 }}">
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                                <tr>
+                                    <td colspan="3"><input type="submit" value="Save Changes" class="btn btn-primary"></td>
+                                </tr>
+                            </form>
+                    {% else %}
                         <tr>
-                            <td>{{ student.reg_no }}</td>
-                            <td>{{ student.user.first_name }} {{ student.user.middle_name }} {{ student.user.last_name }}</td>
+                            <td class="text-muted" colspan="3"><em>Use appropriate filters to generate students.</em></td>
                         </tr>
-                    {% empty %}
-                    <tr>
-                        <td class="text-muted" colspan="2"><em>User appropriate filters to generate students.</em></td>
-                    </tr>
-                    {% endfor %}
+                    {% endif %}
                 </tbody>
             </table>
             </div>

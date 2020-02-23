@@ -243,6 +243,41 @@ class CreateOneExamViewTests(WebTest):
         page.form['marks'] = 50.0
         page = page.form.submit().follow()
         self.assertContains(page, 'Data has been saved successfully.')
+    
+    def test_no_duplicate_exam_objects(self):
+        '''
+        Adding an exam object twice should ovewrite the existing one.
+        '''
+        date_done = datetime.datetime.now()
+        # first instance
+        page = self.app.get(self.create_one_exam_url, user='staff')
+        page.form['student_reg_no'] = '2'
+        page.form['subject_name'] = 'Biology'
+        page.form['exam_type_name'] = 'CAT 2'
+        page.form['term_name'] = '3'
+        page.form['date_done'] =  date_done
+        page.form['marks'] = 50.0
+        page = page.form.submit().follow()
+
+        # second instance
+        page.form['student_reg_no'] = '2'
+        page.form['subject_name'] = 'Biology'
+        page.form['exam_type_name'] = 'CAT 2'
+        page.form['term_name'] = '3'
+        page.form['date_done'] =  date_done
+        page.form['marks'] = 55.5
+        page = page.form.submit().follow()
+
+        # check only the second one is in db
+        query_set = Exam.objects.filter(
+            student__reg_no='2',
+            subject__name='Biology',
+            exam_type__name='CAT 2',
+            term__name='3',
+            date_done=date_done
+        )
+        self.assertEqual(len(query_set), 1)
+        self.assertEqual(query_set[0].marks, 55.5)
 
 class HomeViewTests(WebTest):  
 
@@ -411,7 +446,7 @@ class CreateManyExamsFilterViewTests(WebTest):
         self.assertNotContains(page, 'This subject is not found.')
         self.assertNotContains(page, 'This exam type is not found.')
         self.assertNotContains(page, 'This term is not found.')
-        self.assertTrue(page.context['students_list'] != [])
+        self.assertTrue(page.context['students_list_with_marks'] != [])
 
 class CreateManyExamsViewTests(WebTest):
 
@@ -454,7 +489,7 @@ class CreateManyExamsViewTests(WebTest):
         filter_form['term_name'] = 'unknown'
         filter_form['date_done'] = datetime.datetime.now()
         page = filter_form.submit()
-        self.assertEqual(page.context['students_list'], [])
+        self.assertEqual(page.context['students_list_with_marks'], [])
     
     def test_filter_with_valid_data(self):
         '''
@@ -470,9 +505,24 @@ class CreateManyExamsViewTests(WebTest):
         filter_form['term_name'] = '2'
         filter_form['date_done'] = datetime.datetime.now()
         page = filter_form.submit()
-        self.assertEqual(len(page.context['students_list']), 1)
-        student_profile = page.context['students_list'][0]
+        self.assertEqual(len(page.context['students_list_with_marks']), 1)
+        student_profile = page.context['students_list_with_marks'][0][0] # student list of tuples
         self.assertContains(
             page,
             student_profile.user.first_name + student_profile.user.middle_name + student_profile.user.last_name,
         )
+    
+    def test_marks_entry_form_rendered(self):
+        '''
+        A form to fill in student marks based on applied filters.
+        '''
+        page = self.app.get(self.create_many_exams_url, user='staff')
+        filter_form = page.forms['filter-exams-form']
+        filter_form['form'] = 4
+        filter_form['stream'] = 'north'
+        filter_form['subject_name'] = 'Python'
+        filter_form['exam_type_name'] = 'CAT 2'
+        filter_form['term_name'] = '2'
+        filter_form['date_done'] = datetime.datetime.now()
+        page = filter_form.submit()
+        self.assertEqual(page.forms[1].id, 'students-exams-entry-form') # second form

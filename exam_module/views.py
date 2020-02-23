@@ -59,14 +59,28 @@ class CreateOneExamView(LoginRequiredMixin, View):
                 exam_form.add_error('term_name', 'This term is not found.')
                 
             else:
-                Exam.objects.create(
-                    student = student_profile,
-                    subject = subject,
-                    exam_type = exam_type,
-                    term = term,
-                    date_done = date_done,
-                    marks = marks
-                )
+                # don't duplicate the exam object.
+                try:
+                    exam_object = Exam.objects.get(
+                        student=student_profile,
+                        subject=subject,
+                        exam_type=exam_type,
+                        term=term,
+                    )
+                except Exam.DoesNotExist:
+                    Exam.objects.create(
+                        student = student_profile,
+                        subject = subject,
+                        exam_type = exam_type,
+                        term = term,
+                        date_done = date_done,
+                        marks = marks
+                    )
+                else:
+                    exam_object.date_done = date_done
+                    exam_object.marks = marks
+                    exam_object.save()
+
                 messages.success(request, 'Data has been saved successfully.')
                 return redirect(reverse('exam_module:create_one_exam'))
 
@@ -83,7 +97,7 @@ class CreateManyExamsFilterView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         return redirect(reverse('exam_module:create_many_exams'))
 
-        
+
     def post(self, request, *args, **kwargs):
         create_many_exams_filter_form = self.form_class(request.POST)
         if create_many_exams_filter_form.is_valid():
@@ -93,13 +107,28 @@ class CreateManyExamsFilterView(LoginRequiredMixin, View):
             year_since_registration = date_done.year
             query_set = StudentProfile.objects.filter(stream=stream)
             student_list = [s for s in query_set if s.get_form(year_since_registration) == form]
+            # if a student has marks already filled, read them. this will
+            # be used to populate the students-exams-entry-form
+            subject_name = create_many_exams_filter_form.cleaned_data.get('subject_name')
+            exam_type_name = create_many_exams_filter_form.cleaned_data.get('exam_type_name')
+            term_name = create_many_exams_filter_form.cleaned_data.get('term_name')
+            student_list_with_marks = []
+            for student in student_list:
+                query_set = Exam.objects.filter(
+                    student__reg_no=student.reg_no,
+                    subject__name=subject_name,
+                    exam_type__name=exam_type_name,
+                    term__name=term_name,
+                )
+                student_list_with_marks.append((student, query_set[0].marks if query_set else 0))
+
             return render(request, self.template_name, {
                 'create_many_exams_filter_form': create_many_exams_filter_form,
-                'students_list': student_list,
+                'students_list_with_marks': student_list_with_marks,
             })
         return render(request, self.template_name, {
             'create_many_exams_filter_form': create_many_exams_filter_form,
-            'students_list': []
+            'students_list_with_marks': []
         })
 
 class CreateManyExamsView(LoginRequiredMixin, View):
@@ -115,6 +144,7 @@ class CreateManyExamsView(LoginRequiredMixin, View):
         create_many_exams_filter_form = CreateManyExamsFilterForm()
         return render(request, self.template_name, {
             'create_many_exams_filter_form': create_many_exams_filter_form,
+            'students_list_with_marks': [],
         })
 
     def post(self, request, *args, **kwargs):
