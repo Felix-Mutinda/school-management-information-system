@@ -46,7 +46,7 @@ class StudentProfile(models.Model):
         use the current year.
         '''
         year_since_registration = year_since_registration or datetime.datetime.now().year
-        return self.form + (year_since_registration - int(self.date_registered[:4]))
+        return self.form + (year_since_registration - self.date_registered.year)
     
     def set_form(self, expected_form, year_registered):
         '''

@@ -655,7 +655,7 @@ class StudentProfileModelTests(TestCase):
             reg_no='8989',
             form=1,
             stream='east',
-            date_registered='2020-01-01 07:00:00',
+            date_registered=timezone.now(),
         )
         self.assertEqual(student_profile.get_form(2020), 1)
         self.assertEqual(student_profile.get_form(), 1)
@@ -677,7 +677,7 @@ class StudentProfileModelTests(TestCase):
             reg_no='8989',
             form=1,
             stream='east',
-            date_registered='2017-01-01 07:00:00',
+            date_registered=timezone.now() - datetime.timedelta(days=365*3), #2017
         )
         self.assertEqual(student_profile.set_form(4, 2017), 1)
         self.assertEqual(student_profile.get_form(), 4)
