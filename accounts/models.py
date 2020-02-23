@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
@@ -36,6 +38,26 @@ class StudentProfile(models.Model):
     
     def __str__(self):
         return '%s\'s Profile' % self.user.first_name
+    
+    def get_form(self, year_since_registration=None):
+        '''
+        Computes the form/class based on years elapsed since
+        date_registred. If year_since_registration is None,
+        use the current year.
+        '''
+        year_since_registration = year_since_registration or datetime.datetime.now().year
+        return self.form + (year_since_registration - int(self.date_registered[:4]))
+    
+    def set_form(self, expected_form, year_registered):
+        '''
+        The value stored in form is used to compute the form/class
+        the student is in from the date_registered.year. Thus that value
+        is what should be added to the year registered to give 
+        expected form.
+        '''
+        current_year = datetime.datetime.now().year
+        self.form = expected_form - (current_year - year_registered)
+        return self.form
 
 class GuardianProfile(models.Model):
     '''

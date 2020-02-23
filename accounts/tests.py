@@ -637,3 +637,47 @@ class RegisterStudentFormTests(TestCase):
             'student_date_registered': timezone.now()
         })
         self.assertTrue(form.is_valid())
+    
+class StudentProfileModelTests(TestCase):
+
+    def test_get_form(self):
+        '''
+        get_form computes the class/form of a student
+        by taking a year since registered value, subtracts
+        the year registered and adds this difference to what's
+        stored in form. If no year since registered is None,
+        it uses the current year.
+        '''
+        student_user = create_user('student', 'pass', is_student=True)
+        student_profile = create_profile(
+            is_student=True,
+            user=student_user,
+            reg_no='8989',
+            form=1,
+            stream='east',
+            date_registered='2020-01-01 07:00:00',
+        )
+        self.assertEqual(student_profile.get_form(2020), 1)
+        self.assertEqual(student_profile.get_form(), 1)
+        self.assertEqual(student_profile.get_form(2021), 2)
+        self.assertEqual(student_profile.get_form(2022), 3)
+        self.assertEqual(student_profile.get_form(2023), 4)
+        self.assertEqual(student_profile.get_form(2024), 5)
+
+    def test_set_form(self):
+        '''
+        set_form sets the form/class of a student based on
+        year registered, current year and the expected_form.
+        i.e. form = expected_form - (current_year - year registered)
+        '''
+        student_user = create_user('student', 'pass', is_student=True)
+        student_profile = create_profile(
+            is_student=True,
+            user=student_user,
+            reg_no='8989',
+            form=1,
+            stream='east',
+            date_registered='2017-01-01 07:00:00',
+        )
+        self.assertEqual(student_profile.set_form(4, 2017), 1)
+        self.assertEqual(student_profile.get_form(), 4)
