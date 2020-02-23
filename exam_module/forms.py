@@ -84,22 +84,26 @@ class CreateManyExamsFilterForm(forms.Form):
         self.helper.form_action = 'exam_module:create_many_exams_filter'
         self.helper.form_id = 'filter-exams-form'
         self.helper.layout = Layout(
-            Div(
-                Field('form', wrapper_class='col'),
-                Field('stream', wrapper_class='col'),
-                Field('subject_name', wrapper_class='col'),
-                css_class='form-row',
-            ),
-            Div(
-                Field('exam_type_name', wrapper_class='col'),
-                Field('term_name', wrapper_class='col'),
-                Field('date_done', wrapper_class='col'),
-                css_class='form-row',
-            ),
-            Submit(
-                'submit',
-                'Filter',
-                css_class='btn btn-primary',
+            Fieldset(
+                'Filter Tags',
+                Div(
+                    Field('form', wrapper_class='col'),
+                    Field('stream', wrapper_class='col'),
+                    Field('subject_name', wrapper_class='col'),
+                    css_class='form-row',
+                ),
+                Div(
+                    Field('exam_type_name', wrapper_class='col'),
+                    Field('term_name', wrapper_class='col'),
+                    Field('date_done', wrapper_class='col'),
+                    css_class='form-row',
+                ),
+                Submit(
+                    'submit',
+                    'Filter',
+                    css_class='btn btn-primary',
+                ),
+                css_class='p-3 border',
             ),
         )
 
