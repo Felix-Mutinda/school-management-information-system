@@ -17,6 +17,7 @@ from .models import (
 )
 from .forms import (
     CreateExamForm,
+    CreateManyExamsFilterForm,
 )
 
 class ExamModelTests(TestCase):
@@ -259,3 +260,63 @@ class HomeViewTests(WebTest):
         page = self.app.get(reverse('exam_module:home'), user='staff')
         self.assertTrue(page.status_code, 200)
         self.assertContains(page, 'Exam Module.')
+
+class CreateManyExamsFilterFormTests(TestCase):
+
+    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types']
+
+    def test_form_with_no_data(self):
+        '''
+        Several fields are required to determine the
+        class, stream, subject, exam_type ...
+        needed to create exam objects for several students.
+        '''
+        form = CreateManyExamsFilterForm({})
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['form'], ['This field is required.'])
+        self.assertEqual(form.errors['stream'], ['This field is required.'])
+        self.assertEqual(form.errors['subject_name'], ['This field is required.'])
+        self.assertEqual(form.errors['exam_type_name'], ['This field is required.'])
+        self.assertEqual(form.errors['term_name'], ['This field is required.'])
+        self.assertEqual(form.errors['date_done'], ['This field is required.'])
+    
+    def test_form_with_invalid_data(self):
+        '''
+        If a combination of the filters does not return a list
+        of students, raise a validation error.
+        '''
+        form = CreateManyExamsFilterForm({
+            'form': 6,
+            'stream': 'unknown',
+            'subject_name': 'unknown',
+            'exam_type_name': 'unknown',
+            'term_name': 'unknown',
+            'date_done': datetime.datetime.now(),
+        })
+        self.assertFalse(form.is_valid())
+        self.assertEqual(
+                form.non_field_errors(),
+                ['There are no students found in form %s %s in the year %s.' %(
+                    form.cleaned_data.get('form'),
+                    form.cleaned_data.get('stream'),
+                    form.cleaned_data.get('date_done').year,
+                )],
+            )
+        self.assertEqual(form.errors['subject_name'], ['This subject is not found.'])
+        self.assertEqual(form.errors['exam_type_name'], ['This exam type is not found.'])
+        self.assertEqual(form.errors['term_name'], ['This term is not found.'])
+
+    def test_form_with_valid_data(self):
+        '''
+        A valid combination of the filters should return a 
+        list of students to fill their exam details.
+        '''
+        form = CreateManyExamsFilterForm({
+            'form': 2,
+            'stream': 'west',
+            'subject_name': 'Mathematics',
+            'exam_type_name': 'End Term',
+            'term_name': '3',
+            'date_done': datetime.datetime.now(),
+        })
+        self.assertFalse(form.is_valid())
