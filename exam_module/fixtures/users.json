@@ -35,5 +35,15 @@
             "password": "*",
             "first_name": "User 4"
         }
+    },
+    {
+        "model": "accounts.User",
+        "pk": 5,
+        "fields": {
+            "username": "user 5",
+            "is_student": true,
+            "password": "*",
+            "first_name": "User 5"
+        }
     }
 ]

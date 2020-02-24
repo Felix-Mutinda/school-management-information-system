@@ -50,5 +50,18 @@
             "date_registered": "2017-02-18 22:33:00",
             "kcpe_marks": 4
         }
+    },
+    {
+        "model": "accounts.StudentProfile",
+        "pk": 5,
+        "fields": {
+            "user": 5,
+            "form": 1,
+            "stream": "north",
+            "reg_no": "5",
+            "house": "house 5",
+            "date_registered": "2017-02-18 22:33:00",
+            "kcpe_marks": 5
+        }
     }
 ]

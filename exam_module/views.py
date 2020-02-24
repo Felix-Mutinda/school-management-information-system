@@ -1,3 +1,5 @@
+import decimal
+
 from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
@@ -59,28 +61,7 @@ class CreateOneExamView(LoginRequiredMixin, View):
                 exam_form.add_error('term_name', 'This term is not found.')
                 
             else:
-                # don't duplicate the exam object.
-                try:
-                    exam_object = Exam.objects.get(
-                        student=student_profile,
-                        subject=subject,
-                        exam_type=exam_type,
-                        term=term,
-                    )
-                except Exam.DoesNotExist:
-                    Exam.objects.create(
-                        student = student_profile,
-                        subject = subject,
-                        exam_type = exam_type,
-                        term = term,
-                        date_done = date_done,
-                        marks = marks
-                    )
-                else:
-                    exam_object.date_done = date_done
-                    exam_object.marks = marks
-                    exam_object.save()
-
+                create_exam_object(student_profile.reg_no, subject, exam_type, term, date_done, marks)
                 messages.success(request, 'Data has been saved successfully.')
                 return redirect(reverse('exam_module:create_one_exam'))
 
@@ -148,4 +129,79 @@ class CreateManyExamsView(LoginRequiredMixin, View):
         })
 
     def post(self, request, *args, **kwargs):
-        pass
+        create_many_exams_filter_form = CreateManyExamsFilterForm(request.POST)
+        student_reg_nos = [s[:-6] for s in request.POST.keys() if s.endswith('_marks')] # 'reg_no_marks'
+
+        errors = []
+        students_list_with_marks = []
+        if create_many_exams_filter_form.is_valid():
+            subject_name = request.POST['subject_name']
+            exam_type_name = request.POST['exam_type_name']
+            term_name = request.POST['term_name']
+            date_done = request.POST['date_done']
+
+            try:
+                subject = Subject.objects.get(name=subject_name)
+                exam_type = ExamType.objects.get(name=exam_type_name)
+                term = Term.objects.get(name=term_name)
+            except Exception: # catch all
+                messages.error(request, 'A weird error has occured. Make sure you are sober while using this program.')
+            else:
+                for reg_no in student_reg_nos:
+                    try:
+                        student = StudentProfile.objects.get(reg_no=reg_no)
+                        exam_object = create_exam_object(
+                            student.reg_no,
+                            subject,
+                            exam_type,
+                            term,
+                            date_done,
+                            marks=decimal.Decimal(request.POST['%s_marks' % reg_no])
+                        )
+                    except Exception: # catch all
+                        errors.append(reg_no)
+                    else:
+                        # if all goes well get (student, marks)
+                        students_list_with_marks.append((student, exam_object.marks))
+                        
+        if errors:
+            messages.error(
+                request,
+                'Marks for registration numbers (%s) have errors.' %(', '.join(errors)) # reg_nos with errors
+            )
+        else:
+            messages.success(request, 'Data has been saved successfully.')
+                         
+        return render(request, self.template_name, {
+            'create_many_exams_filter_form': create_many_exams_filter_form,
+            'students_list_with_marks': students_list_with_marks,
+        })
+
+# helper functions
+
+# create and exam object
+def create_exam_object(reg_no, subject, exam_type, term, date_done, marks):
+    student_profile = StudentProfile.objects.get(reg_no=reg_no)
+    # don't duplicate the exam object.
+    try:
+        exam_object = Exam.objects.get( # get to update
+            student=student_profile,
+            subject=subject,
+            exam_type=exam_type,
+            term=term,
+        )
+    except Exam.DoesNotExist:
+        exam_object = Exam.objects.create( # create new
+            student = student_profile,
+            subject = subject,
+            exam_type = exam_type,
+            term = term,
+            date_done = date_done,
+            marks = marks
+        )
+    else:
+        exam_object.date_done = date_done
+        exam_object.marks = marks
+        exam_object.save()
+    
+    return exam_object

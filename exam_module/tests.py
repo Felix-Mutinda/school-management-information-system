@@ -1,4 +1,5 @@
 import datetime
+import decimal
 
 from django.test import TestCase
 from django.utils import timezone
@@ -505,7 +506,7 @@ class CreateManyExamsViewTests(WebTest):
         filter_form['term_name'] = '2'
         filter_form['date_done'] = datetime.datetime.now()
         page = filter_form.submit()
-        self.assertEqual(len(page.context['students_list_with_marks']), 1)
+        self.assertEqual(len(page.context['students_list_with_marks']), 2) # two students
         student_profile = page.context['students_list_with_marks'][0][0] # student list of tuples
         self.assertContains(
             page,
@@ -526,3 +527,60 @@ class CreateManyExamsViewTests(WebTest):
         filter_form['date_done'] = datetime.datetime.now()
         page = filter_form.submit()
         self.assertEqual(page.forms[1].id, 'students-exams-entry-form') # second form
+
+    def test_batch_marks_with_valid_data(self):
+        '''
+        Filling and submitting the students-exams-entry-form should 
+        save the data to database.
+        '''
+        # apply filters to get the form
+        page = self.app.get(self.create_many_exams_url, user='staff')
+        filter_form = page.forms['filter-exams-form']
+        filter_form['form'] = 4
+        filter_form['stream'] = 'north'
+        filter_form['subject_name'] = 'Python'
+        filter_form['exam_type_name'] = 'CAT 2'
+        filter_form['term_name'] = '2'
+        filter_form['date_done'] = datetime.datetime.now()
+        page = filter_form.submit()
+
+        # input marks for reg_no 4 and 5 in fixtures
+        entry_form = page.forms['students-exams-entry-form']
+        entry_form['4_marks'] = 99.99
+        entry_form['5_marks'] = 00.00
+        page = entry_form.submit()
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, 'Data has been saved successfully.')
+        returned_entry_form = page.forms['students-exams-entry-form']
+        self.assertEqual(
+            decimal.Decimal(returned_entry_form['4_marks'].value),
+            decimal.Decimal('99.99')
+        )
+        self.assertEqual(
+            decimal.Decimal(returned_entry_form['5_marks'].value),
+            decimal.Decimal('00.00')
+        )
+
+
+    def test_batch_marks_with_invalid_data(self):
+        '''
+        Out of bound[0.00, 99.99] values or non decimal should raise
+        validation error.
+        '''
+        # apply filters to get the form
+        page = self.app.get(self.create_many_exams_url, user='staff')
+        filter_form = page.forms['filter-exams-form']
+        filter_form['form'] = 4
+        filter_form['stream'] = 'north'
+        filter_form['subject_name'] = 'Python'
+        filter_form['exam_type_name'] = 'CAT 2'
+        filter_form['term_name'] = '2'
+        filter_form['date_done'] = datetime.datetime.now()
+        page = filter_form.submit()
+
+        # input incorrect marks for reg_no 4 and 5 in fixtures
+        entry_form = page.forms['students-exams-entry-form']
+        entry_form['4_marks'] = 100.00
+        entry_form['5_marks'] = '23'
+        page = entry_form.submit()
+        self.assertContains(page, 'Marks for registration numbers (%s, %s) have errors.' % ('4', '5'))
