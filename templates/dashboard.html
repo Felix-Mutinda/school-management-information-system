@@ -6,6 +6,9 @@
 {% block style %}
     <!-- Custom styles for this template -->
     <link href="{% static 'css/dashboard.css' %}" rel="stylesheet">
+
+    {% block dashboard_style %}
+    {% endblock dashboard_style %}
 {% endblock style %}
 
 {% block content %}

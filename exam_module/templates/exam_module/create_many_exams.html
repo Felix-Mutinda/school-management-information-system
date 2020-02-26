@@ -3,6 +3,10 @@
 {% load static %}
 {% load crispy_forms_tags %}
 
+{% block dashboard_style %}
+    <link rel="stylesheet" href="{% static 'exam_module/css/style.css' %}">
+{% endblock dashboard_style %}
+
 {% block dashboard_content %}
     <div class="row">
         <div class="col-md-10 m-3">
@@ -12,16 +16,16 @@
 
     <div class="row">
         <div class="col m-3">
-            {% if students_list_with_marks %}
+            {% if students_exams_entry_form %}
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb p-2">
                   <li class="breadcrumb-item active" aria-current="page">
-                      {{ create_many_exams_filter_form.subject_name.value }}
-                      {{ create_many_exams_filter_form.exam_type_name.value }}
+                      {{ students_exams_entry_form.fields.data }}
+                      {{ students_exams_entry_form.exam_type_name.value }}
                       exam of term 
-                      {{ create_many_exams_filter_form.term_name.value }}
+                      {{ students_exams_entry_form.term_name.value }}
                       for the year
-                      {{ create_many_exams_filter_form.date_done.value | slice:':4' }}
+                      {{ students_exams_entry_form.date_done.value | slice:':4' }}
                       <em>(Use the filter tags above to change your selection*)</em>
                   </li>
                 </ol>
@@ -41,28 +45,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% if students_list_with_marks %}
-                        <form method="POST" action="{% url 'exam_module:create_many_exams' %}" id='students-exams-entry-form'>
-                            {% csrf_token %}
-                            <input type="hidden" name="form" value="{{ create_many_exams_filter_form.form.value }}">
-                            <input type="hidden" name="stream" value="{{ create_many_exams_filter_form.stream.value }}">
-                            <input type="hidden" name="subject_name" value="{{ create_many_exams_filter_form.subject_name.value }}">
-                            <input type="hidden" name="exam_type_name" value="{{ create_many_exams_filter_form.exam_type_name.value }}">
-                            <input type="hidden" name="term_name" value="{{ create_many_exams_filter_form.term_name.value }}">
-                            <input type="hidden" name="date_done" value="{{ create_many_exams_filter_form.date_done.value }}">
-                            {% for student in students_list_with_marks %}
-                                <tr>
-                                    <td>{{ student.0.reg_no }}</td>
-                                    <td>{{ student.0.user.first_name }} {{ student.0.user.middle_name }} {{ student.0.user.last_name }}</td>
-                                    <td>
-                                        <input type="number" name="{{ student.0.reg_no }}_marks" id="id_{{ student.0.reg_no }}_marks" value="{{ student.1 }}" min="0" max="99.99" step="0.01">
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                                <tr>
-                                    <td colspan="3"><input type="submit" value="Save Changes" class="btn btn-primary"></td>
-                                </tr>
-                            </form>
+                    {% if students_exams_entry_form %}
+                        {% crispy students_exams_entry_form %}
                     {% else %}
                         <tr>
                             <td class="text-muted" colspan="3"><em>Use appropriate filters to generate students.</em></td>

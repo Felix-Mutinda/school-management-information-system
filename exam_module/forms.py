@@ -61,6 +61,42 @@ class CreateExamForm(forms.Form):
                 css_class='p-3 border rounded',
             )
         )
+    
+    # validations, all passed in values should exist in db
+
+    def clean_student_reg_no(self):
+        student_reg_no = self.cleaned_data.get('student_reg_no')
+        try:
+            student_profile = StudentProfile.objects.get(reg_no=student_reg_no)
+        except StudentProfile.DoesNotExist:
+            raise forms.ValidationError('A student with this registration number is not found.')
+        return student_reg_no
+
+    def clean_subject_name(self):
+        subject_name = self.cleaned_data.get('subject_name')
+        try:
+            subject = Subject.objects.get(name=subject_name)
+        except Subject.DoesNotExist:
+            raise forms.ValidationError('This subject is not found.')
+        return subject_name
+    
+    def clean_exam_type_name(self):
+        exam_type_name = self.cleaned_data.get('exam_type_name')
+        try:
+            exam_type = ExamType.objects.get(name=exam_type_name)
+        except ExamType.DoesNotExist:
+            raise forms.ValidationError('This exam type is not found.')
+        return exam_type_name
+    
+    def clean_term_name(self):
+        term_name = self.cleaned_data.get('term_name')
+        try:
+            term = Term.objects.get(name=term_name)
+        except Term.DoesNotExist:
+            raise forms.ValidationError('This term is not found.')
+        return term_name
+        
+    
 
 class CreateManyExamsFilterForm(forms.Form):
     '''
@@ -111,40 +147,37 @@ class CreateManyExamsFilterForm(forms.Form):
         '''
         The given subject name should exist in db.
         '''
-        if 'subject_name' in self.cleaned_data:
-            subject_name = self.cleaned_data.get('subject_name')
-            try:
-                subject = Subject.objects.get(name=subject_name)
-            except Subject.DoesNotExist:
-                raise forms.ValidationError('This subject is not found.')
-        
-            return subject_name
+        subject_name = self.cleaned_data.get('subject_name')
+        try:
+            subject = Subject.objects.get(name=subject_name)
+        except Subject.DoesNotExist:
+            raise forms.ValidationError('This subject is not found.')
+    
+        return subject_name
 
     def clean_exam_type_name(self):
         '''
         The given exam type name should exist in db.
         '''
-        if 'exam_type_name' in self.cleaned_data:
-            exam_type_name = self.cleaned_data.get('exam_type_name')
-            try:
-                exam_type = ExamType.objects.get(name=exam_type_name)
-            except ExamType.DoesNotExist:
-                raise forms.ValidationError('This exam type is not found.')
-        
-            return exam_type_name
+        exam_type_name = self.cleaned_data.get('exam_type_name')
+        try:
+            exam_type = ExamType.objects.get(name=exam_type_name)
+        except ExamType.DoesNotExist:
+            raise forms.ValidationError('This exam type is not found.')
+    
+        return exam_type_name
 
     def clean_term_name(self):
         '''
         The given term name should exist in db.
         '''
-        if 'term_name' in self.cleaned_data:
-            term_name = self.cleaned_data.get('term_name')
-            try:
-                term = Term.objects.get(name=term_name)
-            except Term.DoesNotExist:
-                raise forms.ValidationError('This term is not found.')
-        
-            return term_name
+        term_name = self.cleaned_data.get('term_name')
+        try:
+            term = Term.objects.get(name=term_name)
+        except Term.DoesNotExist:
+            raise forms.ValidationError('This term is not found.')
+    
+        return term_name
 
     def clean(self, *args, **kwargs):
         '''

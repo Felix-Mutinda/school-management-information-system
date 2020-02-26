@@ -43,7 +43,9 @@
             "username": "user 5",
             "is_student": true,
             "password": "*",
-            "first_name": "User 5"
+            "first_name": "User 5",
+            "middle_name": "Mid name",
+            "last_name": "Last name"
         }
     }
 ]

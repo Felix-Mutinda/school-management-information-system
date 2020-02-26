@@ -154,6 +154,7 @@ class TermModelTests(TestCase):
         self.assertRaises(IntegrityError, term.save)
 
 class CreateExamFormTests(TestCase):
+    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types']
 
     def test_form_with_no_data(self):
         '''
@@ -188,9 +189,9 @@ class CreateExamFormTests(TestCase):
         validation errors.
         '''
         exam_form = CreateExamForm({
-            'student_reg_no': '3345',
+            'student_reg_no': '3',
             'subject_name': 'Mathematics',
-            'exam_type_name': 'Mid-term',
+            'exam_type_name': 'Mid Term',
             'term_name': '3',
             'date_done': timezone.now(),
             'marks': 50.0,
@@ -447,7 +448,7 @@ class CreateManyExamsFilterViewTests(WebTest):
         self.assertNotContains(page, 'This subject is not found.')
         self.assertNotContains(page, 'This exam type is not found.')
         self.assertNotContains(page, 'This term is not found.')
-        self.assertTrue(page.context['students_list_with_marks'] != [])
+        self.assertTrue(page.context['students_exams_entry_form'] != None)
 
 class CreateManyExamsViewTests(WebTest):
 
@@ -490,7 +491,7 @@ class CreateManyExamsViewTests(WebTest):
         filter_form['term_name'] = 'unknown'
         filter_form['date_done'] = datetime.datetime.now()
         page = filter_form.submit()
-        self.assertEqual(page.context['students_list_with_marks'], [])
+        self.assertEqual(page.context['students_exams_entry_form'], None)
     
     def test_filter_with_valid_data(self):
         '''
@@ -506,11 +507,12 @@ class CreateManyExamsViewTests(WebTest):
         filter_form['term_name'] = '2'
         filter_form['date_done'] = datetime.datetime.now()
         page = filter_form.submit()
-        self.assertEqual(len(page.context['students_list_with_marks']), 2) # two students
-        student_profile = page.context['students_list_with_marks'][0][0] # student list of tuples
-        self.assertContains(
+        # 2 students returned
+        self.assertTrue ('4_marks', page.forms[1].fields)
+        self.assertTrue ('5_marks', page.forms[1].fields)
+        self.assertContains( # their full name displayed
             page,
-            student_profile.user.first_name + student_profile.user.middle_name + student_profile.user.last_name,
+            'User 5 Mid name Last name',
         )
     
     def test_marks_entry_form_rendered(self):
@@ -581,6 +583,6 @@ class CreateManyExamsViewTests(WebTest):
         # input incorrect marks for reg_no 4 and 5 in fixtures
         entry_form = page.forms['students-exams-entry-form']
         entry_form['4_marks'] = 100.00
-        entry_form['5_marks'] = '23'
+        entry_form['5_marks'] = 'nan'
         page = entry_form.submit()
         self.assertContains(page, 'Marks for registration numbers (%s, %s) have errors.' % ('4', '5'))
