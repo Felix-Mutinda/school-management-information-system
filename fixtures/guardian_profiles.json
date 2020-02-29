@@ -1,0 +1,18 @@
+[
+    {
+        "model": "accounts.GuardianProfile",
+        "pk": 1,
+        "fields": {
+            "user": 8,
+            "student": 6
+        }
+    },
+    {
+        "model": "accounts.GuardianProfile",
+        "pk": 2,
+        "fields": {
+            "user": 9,
+            "student": 7
+        }
+    }
+]

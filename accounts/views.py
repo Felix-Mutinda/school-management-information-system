@@ -1,6 +1,6 @@
 import csv
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.urls import reverse
@@ -16,7 +16,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django import forms
 from django.utils.translation import gettext as _
 from django.contrib import messages
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
+
+from crispy_forms.layout import (
+    Layout,
+    Fieldset,
+    Submit,
+)
 
 from .forms import (
     RegisterUserForm,
@@ -32,6 +38,8 @@ from .models import (
     Stream,
     StudentProfile,
 )
+
+from.helpers import get_student_and_guardian_forms
 
 User = get_user_model()
 
@@ -117,7 +125,7 @@ class RegisterStudentView(LoginRequiredMixin, View):
     profiles if they are valid.
     '''
     form_class = RegisterStudentForm
-    template_name = 'accounts/register_student.html'
+    template_name = 'accounts/register_update_student.html'
 
     def get(self, request, *args, **kwargs):
         '''
@@ -135,37 +143,10 @@ class RegisterStudentView(LoginRequiredMixin, View):
         # handles higher level validation
         form = RegisterStudentForm(request.POST)
         if form.is_valid():
-            student_user_form = RegisterUserForm({
-                'username': 'student_%s' % form.cleaned_data.get('student_reg_no'),
-                'first_name': form.cleaned_data.get('student_first_name'),
-                'middle_name': form.cleaned_data.get('student_middle_name'),
-                'last_name': form.cleaned_data.get('student_last_name'),
-                # password is required.
-                'password': '*',
-            })
-            student_profile_form = StudentProfileForm({
-                'reg_no': form.cleaned_data.get('student_reg_no'),
-                'form': form.cleaned_data.get('student_form'),
-                'stream': form.cleaned_data.get('student_stream_name'),
-                'house': form.cleaned_data.get('student_house'),
-                'kcpe_marks': form.cleaned_data.get('student_kcpe_marks'),
-                'date_registered': form.cleaned_data.get('student_date_registered'),
-            })
-            guardian_user_form = RegisterUserForm({
-                'username': 'guardian_to_student_%s' % form.cleaned_data.get('student_reg_no'),
-                'first_name': form.cleaned_data.get('guardian_first_name'),
-                'middle_name': form.cleaned_data.get('guardian_middle_name'),
-                'last_name': form.cleaned_data.get('guardian_last_name'),
-                'phone_number': form.cleaned_data.get('guardian_phone_number'),
-                'email': form.cleaned_data.get('guardian_email'),
-                # password is required.
-                'password': '*',
-            })
+            # get forms through the helper
+            student_user_form, student_profile_form, guardian_user_form = get_student_and_guardian_forms(form.cleaned_data)
 
-            if (student_user_form.is_valid() and
-                student_profile_form.is_valid() and
-                guardian_user_form.is_valid()):
-                
+            if (student_profile_form.is_valid()):
                 student_user = student_user_form.save(commit=False)
                 student_user.is_student = True
                 student_user.save()
@@ -182,9 +163,16 @@ class RegisterStudentView(LoginRequiredMixin, View):
                 messages.success(request, 'Student successfully registered.')
                 return redirect(reverse('accounts:register_student'))
 
-            # assume that the forms were not valid because of duplicate
-            # student reg_no
-            form.add_error('student_reg_no', 'This registration number is already taken.')
+            # a failure can occur in two ways:
+            # - a duplicate reg_no
+            # - a stream not in the given choices
+            for field in student_profile_form.errors:
+                if field == 'reg_no':
+                    form.add_error('student_reg_no', student_profile_form.errors[field])
+                elif field == 'stream':
+                    form.add_error('student_stream_name', student_profile_form.errors[field])
+                else:
+                    form.add_error(None, student_profile_form.errors[field])
 
         return render(request, self.template_name, {'form': form})
 
@@ -217,8 +205,7 @@ class GenerateClassListView(LoginRequiredMixin, View):
             file_type = form.cleaned_data.get('file_type')
 
             # get students
-            stream = Stream.objects.get(pk=stream_name)
-            query_set = StudentProfile.objects.filter(stream=stream)
+            query_set = StudentProfile.objects.filter(stream__name=stream_name)
             students_list = [s for s in query_set if s.get_form() == f]
 
             if file_type == '0':
@@ -227,7 +214,7 @@ class GenerateClassListView(LoginRequiredMixin, View):
                 return response
             else:
                 response = HttpResponse(content_type='text/csv')
-                response['Content-Disposition'] = 'attachment; filename="form %s %s.csv"' %(f,stream.name)
+                response['Content-Disposition'] = 'attachment; filename="form %s %s.csv"' %(f,stream_name)
 
                 i = 1
                 writer = csv.writer(response)
@@ -255,18 +242,77 @@ class FilterStudentView(LoginRequiredMixin, View):
         form = self.form_class(request.POST)
         if form.is_valid():
             reg_no = form.cleaned_data.get('reg_no')
-            return redirect('accounts:update_student', reg_no='6')
+            return redirect('accounts:update_student', reg_no=reg_no)
         return render(request, self.template_name, {'form': form})
 
+# common layout
+from .forms import register_update_student_common_layout
 class UpdateStudentView(LoginRequiredMixin, View):
     '''
     Update students
     '''
     form_class = RegisterStudentForm
-    template_name = 'accounts/update_student'
+    template_name = 'accounts/register_update_student.html'
 
     def get(self, request, reg_no, *args, **kwargs):
-        pass
+        student = get_object_or_404(StudentProfile, reg_no=reg_no)
+        form = RegisterStudentForm({ # populate form with this students details
+            'student_reg_no': student.reg_no,
+            'student_first_name': student.user.first_name,
+            'student_middle_name': student.user.middle_name,
+            'student_last_name': student.user.last_name,
+            'student_form': student.get_form(),
+            'student_stream_name': student.stream.name,
+            'student_house': student.house,
+            'student_kcpe_marks': student.kcpe_marks,
+            'student_date_registered': student.date_registered,
+
+            'guardian_first_name': student.guardian.user.first_name,
+            'guardian_middle_name': student.guardian.user.middle_name,
+            'guardian_last_name': student.guardian.user.last_name,
+            'guardian_phone_number': student.guardian.user.phone_number,
+            'guardian_email': student.guardian.user.email,
+        })
+        form.helper.form_class = 'update-student-form'
+        form.helper.form_method = 'post'
+        form.helper.form_action = reverse('accounts:update_student', args=(reg_no,))
+        form.helper.layout = Layout(
+            Fieldset(
+                'Update Student',
+                register_update_student_common_layout,
+                Submit('submit', 'Update Details', css_class='btn btn-primary'),
+                css_class='p-3 border rounded',
+            )
+        )
+        return render(request, self.template_name, {'form': form})
 
     def post(self, request, reg_no, *args, **kwargs):
-        pass
+        '''
+        Updates details of the student with the given reg_no
+        '''
+        student = get_object_or_404(StudentProfile, reg_no=reg_no)
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            # get forms through the helper
+            student_user_form, student_profile_form, guardian_user_form = get_student_and_guardian_forms(form.cleaned_data, student) # student instance
+
+            if (student_profile_form.is_valid()):
+                student_user_form.save()
+                student_profile_form.save()
+                guardian_user_form.save()
+                
+                messages.success(request, 'Student Details Updated Successfully.')
+                return redirect(reverse('accounts:update_student', args=(student.reg_no)))
+
+            # a failure can occur in two ways:
+            # - a duplicate reg_no
+            # - a stream not in the given choices
+            for field in student_profile_form.errors:
+                if field == 'reg_no':
+                    form.add_error('student_reg_no', student_profile_form.errors[field])
+                elif field == 'stream':
+                    form.add_error('student_stream_name', student_profile_form.errors[field])
+                else:
+                    form.add_error(None, student_profile_form.errors[field])
+
+        return render(request, self.template_name, {'form': form})

@@ -78,5 +78,18 @@
             "kcpe_marks": 6
             
         }
+    },
+    {
+        "model": "accounts.StudentProfile",
+        "pk": 7,
+        "fields": {
+            "user": 7,
+            "form": 1,
+            "stream": 3,
+            "reg_no": "7",
+            "house": "house 7",
+            "date_registered": "2020-02-18 22:33:00",
+            "kcpe_marks": 7
+        }
     }
 ]

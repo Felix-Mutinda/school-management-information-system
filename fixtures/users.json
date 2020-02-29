@@ -59,5 +59,43 @@
             "middle_name": "Mid name",
             "last_name": "Last name"
         }
+    },
+    {
+        "model": "accounts.User",
+        "pk": 7,
+        "fields": {
+            "username": "user 7",
+            "is_student": true,
+            "password": "*",
+            "first_name": "first",
+            "middle_name": "middle",
+            "last_name": "last"
+        }
+    },
+    {
+        "model": "accounts.User",
+        "pk": 8,
+        "fields": {
+            "username": "user 8",
+            "is_guardian": true,
+            "password": "*",
+            "first_name": "first",
+            "middle_name": "middle",
+            "last_name": "last"
+        }
+    },
+    {
+        "model": "accounts.User",
+        "pk": 9,
+        "fields": {
+            "username": "user 9",
+            "is_guardian": true,
+            "password": "*",
+            "first_name": "g-first",
+            "middle_name": "g-middle",
+            "last_name": "g-last",
+            "phone_number": "2547",
+            "email": "g@mail.com"
+        }
     }
 ]

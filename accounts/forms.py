@@ -16,6 +16,9 @@ from .models import (
 
 User = get_user_model()
 
+# choices
+STREAMS = [(stream.name, stream.name.capitalize) for stream in Stream.objects.all()]
+
 class StaffLoginForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
@@ -127,6 +130,52 @@ class StudentProfileForm(forms.ModelForm):
                 'unique': 'This registration number is already taken.'
             }
         }
+    
+# common layout form registering and updating students
+register_update_student_common_layout = Layout(
+    HTML(
+        '''
+        {% include '_messages.html' %}
+        '''
+    ),
+    Fieldset(
+        'Student Details',
+        Field('student_reg_no', autofocus='autofocus'),
+        Div(
+            Field('student_first_name', wrapper_class='col'),
+            Field('student_middle_name', wrapper_class='col'),
+            Field('student_last_name', wrapper_class='col'),
+            css_class='form-row',
+        ),
+        Div(
+            Field('student_form', wrapper_class='col'),
+            Field('student_stream_name', wrapper_class='col'),
+            Field('student_house', wrapper_class='col'),
+            css_class='form-row',
+        ),
+        Div(
+            Field('student_kcpe_marks', wrapper_class='col'),
+            Field('student_date_registered', wrapper_class='col'),
+            css_class='form-row',
+        ),
+        css_class='p-2 mb-2 border rounded',
+    ),
+    Fieldset(
+        'Parent/Guardian Details',
+        Div(
+            Field('guardian_first_name', wrapper_class='col'),
+            Field('guardian_middle_name', wrapper_class='col'),
+            Field('guardian_last_name', wrapper_class='col'),
+            css_class='form-row',
+        ),
+        Div(
+            Field('guardian_phone_number', wrapper_class='col'),
+            Field('guardian_email', wrapper_class='col'),
+            css_class='form-row',
+        ),
+        css_class='p-2 mb-2 border rounded',
+    )
+)
 
 class RegisterStudentForm(forms.Form):
     '''
@@ -142,48 +191,7 @@ class RegisterStudentForm(forms.Form):
         self.helper.layout = Layout(
             Fieldset(
                 'Register Student',
-                HTML(
-                    '''
-                    {% include '_messages.html' %}
-                    '''
-                ),
-                Fieldset(
-                    'Student Details',
-                    Field('student_reg_no', autofocus='autofocus'),
-                    Div(
-                        Field('student_first_name', wrapper_class='col'),
-                        Field('student_middle_name', wrapper_class='col'),
-                        Field('student_last_name', wrapper_class='col'),
-                        css_class='form-row',
-                    ),
-                    Div(
-                        Field('student_form', wrapper_class='col'),
-                        Field('student_stream_name', wrapper_class='col'),
-                        Field('student_house', wrapper_class='col'),
-                        css_class='form-row',
-                    ),
-                    Div(
-                        Field('student_kcpe_marks', wrapper_class='col'),
-                        Field('student_date_registered', wrapper_class='col'),
-                        css_class='form-row',
-                    ),
-                    css_class='p-2 mb-2 border rounded',
-                ),
-                Fieldset(
-                    'Parent/Guardian Details',
-                    Div(
-                        Field('guardian_first_name', wrapper_class='col'),
-                        Field('guardian_middle_name', wrapper_class='col'),
-                        Field('guardian_last_name', wrapper_class='col'),
-                        css_class='form-row',
-                    ),
-                    Div(
-                        Field('guardian_phone_number', wrapper_class='col'),
-                        Field('guardian_email', wrapper_class='col'),
-                        css_class='form-row',
-                    ),
-                    css_class='p-2 mb-2 border rounded',
-                ),
+                register_update_student_common_layout,
                 Submit('submit', 'Save Details', css_class='btn btn-primary'),
                 css_class='p-3 border rounded',
             ),
@@ -195,7 +203,7 @@ class RegisterStudentForm(forms.Form):
     student_middle_name = forms.CharField(label='Middle Name', required=False)
     student_last_name = forms.CharField(label='Sir Name')
     student_form = forms.IntegerField(label='Form/ Class', min_value=1)
-    student_stream_name = forms.CharField(label='Stream')
+    student_stream_name = forms.ChoiceField(label='Stream', widget=forms.Select, choices=STREAMS)
     student_house = forms.CharField(label='Domitory/ House', required=False)
     student_kcpe_marks = forms.IntegerField(label='KCPE Marks', min_value=0, required=False)
     student_date_registered = forms.DateTimeField(label='Date Registered', initial=datetime.datetime.now())
@@ -209,7 +217,7 @@ class RegisterStudentForm(forms.Form):
     def clean_student_stream_name(self):
         stream_name = self.cleaned_data.get('student_stream_name')
         try:
-            stream = Stream.objects.get(pk=stream_name)
+            stream = Stream.objects.get(name=stream_name)
         except Stream.DoesNotExist:
             raise forms.ValidationError('This stream is not found.')
         return stream_name
@@ -220,7 +228,7 @@ class GenerateClassListForm(forms.Form):
     Validate the form and stream used to generate a class
     list.
     '''
-    STREAM_CHOICES = [(stream.id, stream.name) for stream in Stream.objects.all()]
+    STREAM_CHOICES = [(stream.name, stream.name.capitalize()) for stream in Stream.objects.all()]
     
     form = forms.IntegerField(label='Form/ Class')
     stream_name = forms.ChoiceField(label='Stream', widget=forms.Select, choices=STREAM_CHOICES)
@@ -229,7 +237,7 @@ class GenerateClassListForm(forms.Form):
     def clean_stream_name(self):
         stream_name = self.cleaned_data.get('stream_name')
         try:
-            Stream.objects.get(pk=stream_name)
+            Stream.objects.get(name=stream_name)
         except Stream.DoesNotExist:
             raise forms.ValidationError('This stream is not found.')
 
@@ -240,7 +248,7 @@ class GenerateClassListForm(forms.Form):
         form = self.cleaned_data.get('form', '')
         stream_name = self.cleaned_data.get('stream_name', '')
         if form and stream_name:
-            query_set = StudentProfile.objects.filter(stream__pk=stream_name)
+            query_set = StudentProfile.objects.filter(stream__name=stream_name)
             students_list = [s for s in query_set if s.get_form() == form]
             if not students_list:
                 raise forms.ValidationError('No students found in form %s %s.' %(form, stream_name))
@@ -288,8 +296,8 @@ class FilterStudentForm(forms.Form):
                 Div(
                     Field('reg_no', wrapper_class='col'),
                     Submit('submit', 'Get Student', wrapper_class='col', css_class='btn btn-primary'),
-                    css_class='p-3',
-                )
+                ),
+                css_class='p-3 border rounded',
             )
         )
     
