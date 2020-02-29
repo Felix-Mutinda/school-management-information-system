@@ -25,6 +25,7 @@ from .forms import (
     RegisterStudentForm,
     StudentProfileForm,
     GenerateClassListForm,
+    FilterStudentForm,
 )
 from .models import (
     GuardianProfile,
@@ -238,3 +239,34 @@ class GenerateClassListView(LoginRequiredMixin, View):
                 return response
 
         return render(request, self.template_name, {'generate_class_list_form': form})
+
+class FilterStudentView(LoginRequiredMixin, View):
+    '''
+    Filter students.
+    '''
+    form_class = FilterStudentForm
+    template_name = 'accounts/filter_student.html'
+
+    def get(self, request, *args, **kwargs):
+        form = self.form_class()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            reg_no = form.cleaned_data.get('reg_no')
+            return redirect('accounts:update_student', reg_no='6')
+        return render(request, self.template_name, {'form': form})
+
+class UpdateStudentView(LoginRequiredMixin, View):
+    '''
+    Update students
+    '''
+    form_class = RegisterStudentForm
+    template_name = 'accounts/update_student'
+
+    def get(self, request, reg_no, *args, **kwargs):
+        pass
+
+    def post(self, request, reg_no, *args, **kwargs):
+        pass

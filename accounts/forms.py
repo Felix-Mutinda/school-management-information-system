@@ -272,3 +272,32 @@ class GenerateClassListForm(forms.Form):
                 css_class='border rounded p-3',
             )
         )
+
+class FilterStudentForm(forms.Form):
+
+    reg_no = forms.CharField(max_length=20)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.form_action = 'accounts:filter_student'
+        self.helper.layout = Layout(
+            Fieldset(
+                'Filter Tags',
+                Div(
+                    Field('reg_no', wrapper_class='col'),
+                    Submit('submit', 'Get Student', wrapper_class='col', css_class='btn btn-primary'),
+                    css_class='p-3',
+                )
+            )
+        )
+    
+    def clean_reg_no(self):
+        reg_no = self.cleaned_data.get('reg_no')
+        try:
+            StudentProfile.objects.get(reg_no=reg_no)
+        except StudentProfile.DoesNotExist:
+            raise forms.ValidationError('A student with this registration number is not found.')
+        return reg_no
+    

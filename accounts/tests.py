@@ -16,6 +16,7 @@ from .forms import (
     StudentProfileForm,
     RegisterStudentForm,
     GenerateClassListForm,
+    FilterStudentForm,
 )
 
 from .models import (
@@ -831,3 +832,75 @@ class GenerateClassListFormTests(TestCase):
             'file_type': 0,
         }) 
         self.assertTrue(form.is_valid())
+
+class FilterStudentFormTests(TestCase):
+    fixtures = ['users', 'student_profiles', 'streams']
+
+    def test_form_with_no_data(self):
+        form = FilterStudentForm({})
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['reg_no'], ['This field is required.'])
+
+    def test_form_with_invalid_data(self):
+        form = FilterStudentForm({
+            'reg_no': 'non exists'
+        })
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['reg_no'], ['A student with this registration number is not found.'])
+
+    def test_form_with_valid_data(self):
+        form = FilterStudentForm({
+            'reg_no': '6'
+        })
+        self.assertTrue(form.is_valid())
+
+    
+class FilterStudentViewTests(WebTest):
+    fixtures = ['users', 'student_profiles', 'streams']
+
+    def setUp(self):
+        self.login_url = reverse('accounts:login')
+        self.filter_student_url = reverse('accounts:filter_student')
+
+    def test_requires_login(self):
+        page = self.app.get(self.filter_student_url)
+        self.assertRedirects(
+            page,
+            self.login_url+'?next='+self.filter_student_url,
+        )
+        
+    def test_filter_form_rendered(self):
+        '''
+        A filter form to identify the student to update.
+        '''
+        page = self.app.get(self.filter_student_url, user='staff')
+        self.assertTrue(len(page.forms) >= 1)
+    
+    def test_filter_form_with_no_data(self):
+        '''
+        Test the filter with unfilled field.
+        '''
+        page = self.app.get(self.filter_student_url, user='staff')
+        page = page.form.submit()
+        self.assertContains(page, 'This field is required.')
+    
+    def test_filter_form_with_invalid_data(self):
+        '''
+        Test the filter with non existent student.
+        '''
+        page = self.app.get(self.filter_student_url, user='staff')
+        page.form['reg_no'] = 'unknown'
+        page = page.form.submit()
+        self.assertContains(page, 'A student with this registration number is not found.')
+    
+    def test_filter_form_with_valid_data(self):
+        '''
+        Test the filter with existing student.
+        '''
+        page = self.app.get(self.filter_student_url, user='staff')
+        page.form['reg_no'] = '6'
+        page = page.form.submit()
+        self.assertRedirects(
+            page,
+            reverse('accounts:update_student', args=('6',))
+        )
