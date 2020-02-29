@@ -220,8 +220,10 @@ class GenerateClassListForm(forms.Form):
     Validate the form and stream used to generate a class
     list.
     '''
+    STREAM_CHOICES = [(stream.id, stream.name) for stream in Stream.objects.all()]
+    
     form = forms.IntegerField(label='Form/ Class')
-    stream_name = forms.CharField(label='Stream')
+    stream_name = forms.ChoiceField(label='Stream', widget=forms.Select, choices=STREAM_CHOICES)
     file_type = forms.ChoiceField(label='Choose File Type', widget=forms.RadioSelect, choices=(('0', 'PDF'), ('1', 'EXCEL')))
 
     def clean_stream_name(self):

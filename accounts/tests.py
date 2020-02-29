@@ -760,11 +760,11 @@ class GenerateClassListViewTests(WebTest):
         '''
         page = self.app.get(self.generate_class_list_url, user='staff')
         page.form['form'] = 'nan'
-        page.form['stream_name'] = 7
+        page.form['stream_name'] = '3'
         page.form['file_type'] = '0'
         page = page.form.submit()
         self.assertContains(page, 'Enter a whole number.')
-        self.assertContains(page, 'This stream is not found.')
+        # self.assertContains(page, 'This stream is not found.')
     
     def test_form_with_valid_data_file_type_excel(self):
         '''
@@ -806,7 +806,7 @@ class GenerateClassListFormTests(TestCase):
         })
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors['form'], ['Enter a whole number.'])
-        self.assertEqual(form.errors['stream_name'], ['This stream is not found.'])
+        self.assertEqual(form.errors['stream_name'], ['Select a valid choice. %s is not one of the available choices.' %'6'])
         self.assertEqual(form.errors['file_type'], ['Select a valid choice. %s is not one of the available choices.' %'2'])
     
     def test_form_with_filters_which_do_not_return_data(self):
