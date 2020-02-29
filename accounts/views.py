@@ -302,7 +302,7 @@ class UpdateStudentView(LoginRequiredMixin, View):
                 guardian_user_form.save()
                 
                 messages.success(request, 'Student Details Updated Successfully.')
-                return redirect(reverse('accounts:update_student', args=(student.reg_no)))
+                return redirect(reverse('accounts:update_student', args=(student.reg_no,)))
 
             # a failure can occur in two ways:
             # - a duplicate reg_no
