@@ -325,10 +325,10 @@ class CreateManyExamsFilterFormTests(TestCase):
         '''
         form = CreateManyExamsFilterForm({
             'form': 6,
-            'stream': 6,
-            'subject_name': 'unknown',
-            'exam_type_name': 'unknown',
-            'term_name': 'unknown',
+            'stream': 'east',
+            'subject_name': 'Python',
+            'exam_type_name': 'End Term',
+            'term_name': '1',
             'date_done': datetime.datetime.now(),
         })
         self.assertFalse(form.is_valid())
@@ -340,9 +340,6 @@ class CreateManyExamsFilterFormTests(TestCase):
                     form.cleaned_data.get('date_done').year,
                 )],
             )
-        self.assertEqual(form.errors['subject_name'], ['This subject is not found.'])
-        self.assertEqual(form.errors['exam_type_name'], ['This exam type is not found.'])
-        self.assertEqual(form.errors['term_name'], ['This term is not found.'])
 
     def test_form_with_valid_data(self):
         '''
@@ -351,7 +348,7 @@ class CreateManyExamsFilterFormTests(TestCase):
         '''
         form = CreateManyExamsFilterForm({
             'form': 2,
-            'stream': 4,
+            'stream': 'west',
             'subject_name': 'Mathematics',
             'exam_type_name': 'End Term',
             'term_name': '3',
@@ -407,23 +404,20 @@ class CreateManyExamsFilterViewTests(WebTest):
         page = self.app.get(self.create_many_exams_url, user='staff')
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 6
-        filter_form['stream'] = 6
+        filter_form['stream'] = 'north'
         filter_form['subject_name'] = 'Mathematics'
-        filter_form['exam_type_name'] = 'unknown'
-        filter_form['term_name'] = 'unknown'
+        filter_form['exam_type_name'] = 'Mid Term'
+        filter_form['term_name'] = '3'
         filter_form['date_done'] = datetime.datetime.now()
         page = filter_form.submit()
         self.assertContains(
             page,
             'There are no students found in form %s %s in the year %s.' %(
                 6,
-                6,
+                'north',
                 datetime.datetime.now().year,
             )
         )
-        self.assertContains(page, 'This subject is not found.')
-        self.assertContains(page, 'This exam type is not found.')
-        self.assertContains(page, 'This term is not found.')
     
     def test_filter_view_with_valid_data(self):
         '''
@@ -488,8 +482,8 @@ class CreateManyExamsViewTests(WebTest):
         filter_form['form'] = 8
         filter_form['stream'] = 'north'
         filter_form['subject_name'] = 'Python'
-        filter_form['exam_type_name'] = 'unknown'
-        filter_form['term_name'] = 'unknown'
+        filter_form['exam_type_name'] = 'Opener'
+        filter_form['term_name'] = '2'
         filter_form['date_done'] = datetime.datetime.now()
         page = filter_form.submit()
         self.assertEqual(page.context['students_exams_entry_form'], None)
