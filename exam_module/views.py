@@ -92,7 +92,7 @@ class CreateManyExamsFilterView(LoginRequiredMixin, View):
             # get students in the given form and stream.
             # form is determined using date_done.year 
             year_since_registration = date_done.year
-            query_set = StudentProfile.objects.filter(stream=stream)
+            query_set = StudentProfile.objects.filter(stream__name=stream)
             student_list = [s for s in query_set if s.get_form(year_since_registration) == form]
 
             subject_name = create_many_exams_filter_form.cleaned_data.get('subject_name')

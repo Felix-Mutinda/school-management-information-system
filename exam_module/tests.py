@@ -408,7 +408,7 @@ class CreateManyExamsFilterViewTests(WebTest):
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 6
         filter_form['stream'] = 6
-        filter_form['subject_name'] = 'unknown'
+        filter_form['subject_name'] = 'Mathematics'
         filter_form['exam_type_name'] = 'unknown'
         filter_form['term_name'] = 'unknown'
         filter_form['date_done'] = datetime.datetime.now()
@@ -432,7 +432,7 @@ class CreateManyExamsFilterViewTests(WebTest):
         page = self.app.get(self.create_many_exams_url, user='staff')
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 4
-        filter_form['stream'] = 1
+        filter_form['stream'] = 'north'
         filter_form['subject_name'] = 'Python'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'
@@ -486,8 +486,8 @@ class CreateManyExamsViewTests(WebTest):
         page = self.app.get(self.create_many_exams_url, user='staff')
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 8
-        filter_form['stream'] = 6
-        filter_form['subject_name'] = 'unknown'
+        filter_form['stream'] = 'north'
+        filter_form['subject_name'] = 'Python'
         filter_form['exam_type_name'] = 'unknown'
         filter_form['term_name'] = 'unknown'
         filter_form['date_done'] = datetime.datetime.now()
@@ -502,7 +502,7 @@ class CreateManyExamsViewTests(WebTest):
         page = self.app.get(self.create_many_exams_url, user='staff')
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 4
-        filter_form['stream'] = 1
+        filter_form['stream'] = 'north'
         filter_form['subject_name'] = 'Python'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'
@@ -523,7 +523,7 @@ class CreateManyExamsViewTests(WebTest):
         page = self.app.get(self.create_many_exams_url, user='staff')
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 4
-        filter_form['stream'] = 1
+        filter_form['stream'] = 'north'
         filter_form['subject_name'] = 'Python'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'
@@ -540,7 +540,7 @@ class CreateManyExamsViewTests(WebTest):
         page = self.app.get(self.create_many_exams_url, user='staff')
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 4
-        filter_form['stream'] = 1
+        filter_form['stream'] = 'north'
         filter_form['subject_name'] = 'Python'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'
@@ -574,7 +574,7 @@ class CreateManyExamsViewTests(WebTest):
         page = self.app.get(self.create_many_exams_url, user='staff')
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 4
-        filter_form['stream'] = 1
+        filter_form['stream'] = 'north'
         filter_form['subject_name'] = 'Python'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'

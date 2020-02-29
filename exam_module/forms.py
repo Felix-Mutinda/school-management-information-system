@@ -12,6 +12,7 @@ from crispy_forms.layout import (
 
 from accounts.models import (
     StudentProfile,
+    Stream,
 )
 
 from .models import (
@@ -20,16 +21,22 @@ from .models import (
     Term
 )
 
+# choices
+STREAMS = [(stream.name, stream.name.capitalize()) for stream in Stream.objects.all()]
+SUBJECTS = [(subject.name, subject.name.capitalize()) for subject in Subject.objects.all()]
+EXAM_TYPES = [(exam_type.name, exam_type.name.capitalize()) for exam_type in ExamType.objects.all()]
+TERMS = [(term.name, term.name.capitalize()) for term in Term.objects.all()]
+
 class CreateExamForm(forms.Form):
     '''
     Handle higher level validity i.e. required fields
     and Correct data type.
     '''
-    student_reg_no = forms.CharField(max_length=20)
-    subject_name = forms.CharField()
-    exam_type_name = forms.CharField()
-    term_name = forms.CharField()
-    date_done = forms.DateTimeField()
+    student_reg_no = forms.CharField(label="Student Registration Number", max_length=20)
+    subject_name = forms.ChoiceField(label="Subject", widget=forms.Select, choices=SUBJECTS)
+    exam_type_name = forms.ChoiceField(label="Exam Type", widget=forms.Select, choices=EXAM_TYPES)
+    term_name = forms.ChoiceField(label="Term", widget=forms.Select, choices=TERMS)
+    date_done = forms.DateTimeField(widget=forms.DateTimeInput)
     marks = forms.DecimalField(max_digits=4, decimal_places=2)
 
     def __init__(self, *args, **kwargs):
@@ -104,11 +111,11 @@ class CreateManyExamsFilterForm(forms.Form):
     batch exam entry.
     '''
     form = forms.IntegerField()
-    stream = forms.CharField()
-    subject_name = forms.CharField(label='Subject')
-    exam_type_name = forms.CharField(label='Exam Type')
-    term_name = forms.CharField(label='Term')
-    date_done = forms.DateTimeField(label='Date Done')
+    stream = forms.ChoiceField(widget=forms.Select, choices=STREAMS)
+    subject_name = forms.ChoiceField(label='Subject', widget=forms.Select, choices=SUBJECTS)
+    exam_type_name = forms.ChoiceField(label='Exam Type', widget=forms.Select, choices=EXAM_TYPES)
+    term_name = forms.ChoiceField(label='Term', widget=forms.Select, choices=TERMS)
+    date_done = forms.DateTimeField(label='Date Done', widget=forms.DateTimeInput)
 
     def __init__(self, *args, **kwargs):
         '''
@@ -192,7 +199,7 @@ class CreateManyExamsFilterForm(forms.Form):
             if 'form' in self.cleaned_data and 'stream' in self.cleaned_data:
                 form = self.cleaned_data.get('form')
                 stream = self.cleaned_data.get('stream')
-                query_set = StudentProfile.objects.filter(stream=stream)
+                query_set = StudentProfile.objects.filter(stream__name=stream)
                 students_list = [s for s in query_set if s.get_form(year_offset) == form]
                 if not students_list:
                     raise forms.ValidationError(
