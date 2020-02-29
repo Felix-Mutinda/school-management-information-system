@@ -1,0 +1,30 @@
+[
+    {
+        "model": "accounts.Stream",
+        "pk": 1,
+        "fields": {
+            "name": "north"
+        }
+    },
+    {
+        "model": "accounts.Stream",
+        "pk": 2,
+        "fields": {
+            "name": "south"
+        }
+    },
+    {
+        "model": "accounts.Stream",
+        "pk": 3,
+        "fields": {
+            "name": "east"
+        }
+    },
+    {
+        "model": "accounts.Stream",
+        "pk": 4,
+        "fields": {
+            "name": "west"
+        }
+    }
+]

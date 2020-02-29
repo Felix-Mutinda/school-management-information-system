@@ -14,13 +14,15 @@ from .forms import (
     RegisterUserForm,
     StaffProfileForm,
     StudentProfileForm,
-    RegisterStudentForm
+    RegisterStudentForm,
+    GenerateClassListForm,
 )
 
 from .models import (
     StaffProfile,
     StudentProfile,
     GuardianProfile,
+    Stream,
 )
 
 # get our custom user
@@ -101,7 +103,7 @@ class UserModelTests(TestCase):
             user=student_user,
             reg_no='reg_no',
             form='2',
-            stream='south',
+            stream=Stream.objects.create(name='south'),
             house='house',
             date_registered=timezone.now()
         )
@@ -121,7 +123,7 @@ class UserModelTests(TestCase):
             user=student_user,
             reg_no='reg_no',
             form='2',
-            stream='north',
+            stream=Stream.objects.create(name='north'),
             house='house',
             date_registered=timezone.now()
         )
@@ -301,7 +303,7 @@ class StudentProfileFormTests(TestCase):
         form = StudentProfileForm({
             'reg_no': '3594',
             'form': '1',
-            'stream': 'east',
+            'stream': Stream.objects.create(name='north'),
             'date_registered': timezone.now()
         })
         self.assertTrue(form.is_valid)
@@ -318,7 +320,7 @@ class StudentProfileFormTests(TestCase):
         form1 = StudentProfileForm({
             'reg_no': '3594',
             'form': '2',
-            'stream': 'north',
+            'stream': Stream.objects.create(name='north'),
             'date_registered': timezone.now()
         })
         self.assertTrue(form1.is_valid())
@@ -503,6 +505,8 @@ class StaffListViewTests(TestCase):
 
 class RegisterStudentViewTests(WebTest):
 
+    fixtures = ['streams']
+
     def setUp(self):
         '''
         Initialize the register student url.
@@ -538,7 +542,7 @@ class RegisterStudentViewTests(WebTest):
         self.assertTrue('student_middle_name' in page.form.fields)
         self.assertTrue('student_last_name' in page.form.fields)
         self.assertTrue('student_form' in page.form.fields)
-        self.assertTrue('student_stream' in page.form.fields)
+        self.assertTrue('student_stream_name' in page.form.fields)
         self.assertTrue('student_house' in page.form.fields)
         self.assertTrue('student_kcpe_marks' in page.form.fields)
         self.assertTrue('student_date_registered' in page.form.fields)
@@ -557,7 +561,7 @@ class RegisterStudentViewTests(WebTest):
         page = page.form.submit()
         self.assertContains(page, 'This field is required.')
     
-    def test_form_with_required_fields(self):
+    def test_form_with_unknown_stream_name(self):
         '''
         If all the required fields have been filled we should get
         a Student successfully registered. No form errors should occur.
@@ -567,7 +571,23 @@ class RegisterStudentViewTests(WebTest):
         page.form['student_first_name'] = 'first name'
         page.form['student_last_name'] = 'last name'
         page.form['student_form'] = '1'
-        page.form['student_stream'] = 'east'
+        page.form['student_stream_name'] = 7
+        page.form['student_date_registered'] = datetime.datetime.now()
+        # page.showbrowser()
+        page = page.form.submit()
+        self.assertContains(page, 'This stream is not found.')
+    
+    def test_form_with_required_fields(self):
+        '''
+        If all the required fields have been filled we should get
+        a Student successfully registered. No form errors should occur.
+        '''
+        page = self.app.get(self.register_student_url, user='staff')
+        page.form['student_reg_no'] = '33937'
+        page.form['student_first_name'] = 'first name'
+        page.form['student_last_name'] = 'last name'
+        page.form['student_form'] = 1
+        page.form['student_stream_name'] = 4
         page.form['student_date_registered'] = datetime.datetime.now()
         # page.showbrowser()
         page = page.form.submit().follow()
@@ -586,7 +606,7 @@ class RegisterStudentViewTests(WebTest):
         page.form['student_first_name'] = 'first name'
         page.form['student_last_name'] = 'last name'
         page.form['student_form'] = '1'
-        page.form['student_stream'] = 'east'
+        page.form['student_stream_name'] = 3
         page.form['student_date_registered'] = datetime.datetime.now()
         page = page.form.submit().follow()
 
@@ -596,7 +616,7 @@ class RegisterStudentViewTests(WebTest):
         page.form['student_first_name'] = 'first name'
         page.form['student_last_name'] = 'last name'
         page.form['student_form'] = '1'
-        page.form['student_stream'] = 'east'
+        page.form['student_stream_name'] = 3
         page.form['student_date_registered'] = datetime.datetime.now()
         page = page.form.submit()
         # should report the error on same page, i.e. 200 not 302(success)
@@ -608,6 +628,8 @@ class RegisterStudentFormTests(TestCase):
     '''
     Only concerns itself with required fields been filled.
     '''
+
+    fixtures = ['streams']
 
     def test_form_with_no_data(self):
         '''
@@ -621,7 +643,7 @@ class RegisterStudentFormTests(TestCase):
         self.assertEqual(form.errors['student_first_name'], ['This field is required.'])
         self.assertEqual(form.errors['student_last_name'], ['This field is required.'])
         self.assertEqual(form.errors['student_form'], ['This field is required.'])
-        self.assertEqual(form.errors['student_stream'], ['This field is required.'])
+        self.assertEqual(form.errors['student_stream_name'], ['This field is required.'])
         self.assertEqual(form.errors['student_date_registered'], ['This field is required.'])
     
     def test_form_with_required_fields(self):
@@ -633,7 +655,7 @@ class RegisterStudentFormTests(TestCase):
             'student_first_name': 'first_name',
             'student_last_name': 'last_name',
             'student_form': '2',
-            'student_stream': 'east',
+            'student_stream_name': 3,
             'student_date_registered': timezone.now()
         })
         self.assertTrue(form.is_valid())
@@ -654,7 +676,7 @@ class StudentProfileModelTests(TestCase):
             user=student_user,
             reg_no='8989',
             form=1,
-            stream='east',
+            stream=Stream.objects.create(name='east'),
             date_registered=timezone.now(),
         )
         self.assertEqual(student_profile.get_form(2020), 1)
@@ -676,8 +698,136 @@ class StudentProfileModelTests(TestCase):
             user=student_user,
             reg_no='8989',
             form=1,
-            stream='east',
+            stream=Stream.objects.create(name='east'),
             date_registered=timezone.now() - datetime.timedelta(days=365*3), #2017
         )
         self.assertEqual(student_profile.set_form(4, 2017), 1)
         self.assertEqual(student_profile.get_form(), 4)
+    
+class StudentsHomeViewTests(WebTest):
+
+    def setUp(self):
+        self.login_url = reverse('accounts:login')
+        self.students_home_url = reverse('accounts:students_home')
+
+    def test_requires_login(self):
+        '''
+        Should redirect to the login page if not logged in.
+        '''
+        page = self.app.get(self.students_home_url)
+        self.assertRedirects(
+            page,
+            self.login_url+'?next='+self.students_home_url
+        )
+    
+    def test_page_displayed_correctly(self):
+        '''
+        All the shortcuts/ links to manage students should be displayed.
+        '''
+        page = self.app.get(self.students_home_url, user='staff')
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, reverse('accounts:register_student'))
+
+class GenerateClassListViewTests(WebTest):
+
+    fixtures = ['streams', 'users', 'student_profiles', 'subjects', 'exam_types', 'terms']
+
+    def setUp(self):
+        self.login_url = reverse('accounts:login')
+        self.generate_class_list_url = reverse('accounts:generate_class_list')
+
+    def test_requires_login(self):
+        '''
+        Should redirect to the login page if not logged in.
+        '''
+        page = self.app.get(self.generate_class_list_url)
+        self.assertRedirects(
+            page,
+            self.login_url+'?next='+self.generate_class_list_url
+        )
+    
+    def test_page_displayed_correctly(self):
+        '''
+        All the shortcuts/ links to manage students should be displayed.
+        '''
+        page = self.app.get(self.generate_class_list_url, user='staff')
+        self.assertEqual(page.status_code, 200)
+        self.assertEqual(page.form.id, 'generate-class-list-form')
+    
+    def test_form_with_invalid_data(self):
+        '''
+        Validation errors should be displayed.
+        '''
+        page = self.app.get(self.generate_class_list_url, user='staff')
+        page.form['form'] = 'nan'
+        page.form['stream_name'] = 7
+        page.form['file_type'] = '0'
+        page = page.form.submit()
+        self.assertContains(page, 'Enter a whole number.')
+        self.assertContains(page, 'This stream is not found.')
+    
+    def test_form_with_valid_data_file_type_excel(self):
+        '''
+        Redirect to selected file type.
+        '''
+        page = self.app.get(self.generate_class_list_url, user='staff')
+        page.form['form'] = 1
+        page.form['stream_name'] = 4
+        page.form['file_type'] = '1'
+        page = page.form.submit()
+        self.assertEqual(page.status_code, 200)
+        # page.showbrowser()
+        self.assertEqual(page.content_type, 'text/csv')
+
+
+class GenerateClassListFormTests(TestCase):
+
+    fixtures = ['streams', 'users', 'student_profiles', 'subjects', 'exam_types', 'terms']
+    
+    def test_form_with_no_data(self):
+        '''
+        Not valid.
+        '''
+        form = GenerateClassListForm({})
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['form'], ['This field is required.'])
+        self.assertEqual(form.errors['stream_name'], ['This field is required.'])
+        self.assertEqual(form.errors['file_type'], ['This field is required.'])
+    
+    def test_form_with_invalid_data(self):
+        '''
+        Values of stream_name not in db and/or nan form should raise a 
+        validation error.
+        '''
+        form = GenerateClassListForm({
+            'form': 'nan',
+            'stream_name': 6,
+            'file_type': 2,
+        })
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['form'], ['Enter a whole number.'])
+        self.assertEqual(form.errors['stream_name'], ['This stream is not found.'])
+        self.assertEqual(form.errors['file_type'], ['Select a valid choice. %s is not one of the available choices.' %'2'])
+    
+    def test_form_with_filters_which_do_not_return_data(self):
+        '''
+        Filters which don't get any data should raise validation error.
+        '''
+        form = GenerateClassListForm({
+            'form': 4,
+            'stream_name': 2,
+            'file_type': 1,
+        })
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.non_field_errors(), ['No students found in form %s %s.' %('4', '2')])
+
+    def test_form_with_valid_data(self):
+        '''
+        A correct filter should not raise any validation errors.
+        '''
+        form = GenerateClassListForm({
+            'form': 4,
+            'stream_name': 3,
+            'file_type': 0,
+        }) 
+        self.assertTrue(form.is_valid())

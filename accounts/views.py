@@ -1,3 +1,5 @@
+import csv
+
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
@@ -14,16 +16,20 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django import forms
 from django.utils.translation import gettext as _
 from django.contrib import messages
+from django.http import HttpResponse, HttpResponseRedirect
 
 from .forms import (
     RegisterUserForm,
     StaffLoginForm,
     StaffProfileForm,
     RegisterStudentForm,
-    StudentProfileForm
+    StudentProfileForm,
+    GenerateClassListForm,
 )
 from .models import (
     GuardianProfile,
+    Stream,
+    StudentProfile,
 )
 
 User = get_user_model()
@@ -139,7 +145,7 @@ class RegisterStudentView(LoginRequiredMixin, View):
             student_profile_form = StudentProfileForm({
                 'reg_no': form.cleaned_data.get('student_reg_no'),
                 'form': form.cleaned_data.get('student_form'),
-                'stream': form.cleaned_data.get('student_stream'),
+                'stream': form.cleaned_data.get('student_stream_name'),
                 'house': form.cleaned_data.get('student_house'),
                 'kcpe_marks': form.cleaned_data.get('student_kcpe_marks'),
                 'date_registered': form.cleaned_data.get('student_date_registered'),
@@ -180,3 +186,55 @@ class RegisterStudentView(LoginRequiredMixin, View):
             form.add_error('student_reg_no', 'This registration number is already taken.')
 
         return render(request, self.template_name, {'form': form})
+
+class StudentsHomeView(LoginRequiredMixin, View):
+    '''
+    Quick links to get and manage students.
+    '''
+    template_name = 'accounts/students_home.html'
+
+    def get(self, request, *args, **kwargs):
+
+        return render(request, self.template_name)
+
+class GenerateClassListView(LoginRequiredMixin, View):
+    '''
+    Use a filter form to generate a class list.
+    '''
+    form_class = GenerateClassListForm
+    template_name = 'accounts/generate_class_list.html'
+
+    def get(self, request, *args, **kwargs):
+        form = self.form_class()
+        return render(request, self.template_name, {'generate_class_list_form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            f = form.cleaned_data.get('form')
+            stream_name = form.cleaned_data.get('stream_name')
+            file_type = form.cleaned_data.get('file_type')
+
+            # get students
+            stream = Stream.objects.get(pk=stream_name)
+            query_set = StudentProfile.objects.filter(stream=stream)
+            students_list = [s for s in query_set if s.get_form() == f]
+
+            if file_type == '0':
+                response = HttpResponse(content_type='application/pdf')
+                messages.success(request, 'File has been generated.')
+                return response
+            else:
+                response = HttpResponse(content_type='text/csv')
+                response['Content-Disposition'] = 'attachment; filename="form %s %s.csv"' %(f,stream.name)
+
+                i = 1
+                writer = csv.writer(response)
+                for student in students_list:
+                    # '#', 'reg_no', 'full name'
+                    writer.writerow([i, student.reg_no, '%s %s %s' %(student.user.first_name, student.user.middle_name, student.user.last_name)])
+                    i += 1
+                messages.success(request, 'File has been generated.')
+                return response
+
+        return render(request, self.template_name, {'generate_class_list_form': form})

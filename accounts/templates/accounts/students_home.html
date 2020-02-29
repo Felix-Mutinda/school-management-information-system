@@ -1,0 +1,51 @@
+{% extends 'dashboard.html' %}
+
+{% block dashboard_content %}
+<!-- Deck one-->
+<div class="card-deck mt-3 mb-3 text-center">
+    <!-- Card 1 -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header">
+            <h4 class="my-0 font-weight-normal">Class List</h4>
+        </div>
+        <div class="card-body">
+            <h2 class="card-title pricing-card-title">Per Class</h2>
+            <p class=" mt-3 mb-4 p-3">
+                Use this link to Generate class lists one Class/Form at a time.
+            </p>
+            <a href="{% url 'accounts:generate_class_list' %}" role="button"
+                class="btn btn-lg btn-block btn-outline-primary">Generate</a>
+        </div>
+    </div>
+
+    <!-- Card 2-->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header">
+            <h4 class="my-0 font-weight-normal">Students</h4>
+        </div>
+        <div class="card-body">
+            <h2 class="card-title pricing-card-title">Students</h2>
+            <p class=" mt-3 mb-4 p-3">
+                Use this link.
+            </p>
+            <a role="button" href="#"
+                class="btn btn-lg btn-block btn-outline-primary">Edit</a>
+        </div>
+    </div>
+
+    <!-- Card 3-->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header">
+            <h4 class="my-0 font-weight-normal">Students</h4>
+        </div>
+        <div class="card-body">
+            <h2 class="card-title pricing-card-title">Register</h2>
+            <p class=" mt-3 mb-4 p-3">
+                Use this link to Add New/Update Existing student details.
+            </p>
+            <a href="{% url 'accounts:register_student' %}" role="button"
+                class="btn btn-lg btn-block btn-outline-primary">Register</a>
+        </div>
+    </div>
+</div>
+{% endblock dashboard_content %}

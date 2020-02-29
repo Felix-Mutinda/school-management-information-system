@@ -9,6 +9,7 @@ from django.shortcuts import reverse
 from django_webtest import WebTest
 
 from accounts.tests import create_profile, create_user
+from accounts.models import Stream
 
 from .models import (
     Subject,
@@ -41,7 +42,7 @@ class ExamModelTests(TestCase):
             user=student_user,
             reg_no='reg_no',
             form='2',
-            stream='south',
+            stream=Stream.objects.create(name='south'),
             house='house',
             date_registered=timezone.now()
         )
@@ -77,7 +78,7 @@ class ExamModelTests(TestCase):
             user=student_user,
             reg_no='reg_no',
             form='2',
-            stream='south',
+            stream=Stream.objects.create(name='south'),
             house='house',
             date_registered=timezone.now(),
         )
@@ -154,7 +155,7 @@ class TermModelTests(TestCase):
         self.assertRaises(IntegrityError, term.save)
 
 class CreateExamFormTests(TestCase):
-    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types']
+    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types', 'streams']
 
     def test_form_with_no_data(self):
         '''
@@ -199,7 +200,7 @@ class CreateExamFormTests(TestCase):
         self.assertTrue(exam_form.is_valid())
 
 class CreateOneExamViewTests(WebTest):
-    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types']
+    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types', 'streams']
 
     def setUp(self):
         self.login_url = reverse('accounts:login')
@@ -300,7 +301,7 @@ class HomeViewTests(WebTest):
 
 class CreateManyExamsFilterFormTests(TestCase):
 
-    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types']
+    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types', 'streams']
 
     def test_form_with_no_data(self):
         '''
@@ -324,7 +325,7 @@ class CreateManyExamsFilterFormTests(TestCase):
         '''
         form = CreateManyExamsFilterForm({
             'form': 6,
-            'stream': 'unknown',
+            'stream': 6,
             'subject_name': 'unknown',
             'exam_type_name': 'unknown',
             'term_name': 'unknown',
@@ -350,7 +351,7 @@ class CreateManyExamsFilterFormTests(TestCase):
         '''
         form = CreateManyExamsFilterForm({
             'form': 2,
-            'stream': 'west',
+            'stream': 4,
             'subject_name': 'Mathematics',
             'exam_type_name': 'End Term',
             'term_name': '3',
@@ -360,7 +361,7 @@ class CreateManyExamsFilterFormTests(TestCase):
 
 class CreateManyExamsFilterViewTests(WebTest):
 
-    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types']
+    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types', 'streams']
 
     def setUp(self):
         self.create_many_exams_filter_url = reverse('exam_module:create_many_exams_filter')
@@ -406,7 +407,7 @@ class CreateManyExamsFilterViewTests(WebTest):
         page = self.app.get(self.create_many_exams_url, user='staff')
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 6
-        filter_form['stream'] = 'unknown'
+        filter_form['stream'] = 6
         filter_form['subject_name'] = 'unknown'
         filter_form['exam_type_name'] = 'unknown'
         filter_form['term_name'] = 'unknown'
@@ -416,7 +417,7 @@ class CreateManyExamsFilterViewTests(WebTest):
             page,
             'There are no students found in form %s %s in the year %s.' %(
                 6,
-                'unknown',
+                6,
                 datetime.datetime.now().year,
             )
         )
@@ -431,7 +432,7 @@ class CreateManyExamsFilterViewTests(WebTest):
         page = self.app.get(self.create_many_exams_url, user='staff')
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 4
-        filter_form['stream'] = 'north'
+        filter_form['stream'] = 1
         filter_form['subject_name'] = 'Python'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'
@@ -452,7 +453,7 @@ class CreateManyExamsFilterViewTests(WebTest):
 
 class CreateManyExamsViewTests(WebTest):
 
-    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types']
+    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types', 'streams']
 
     def setUp(self):
         self.create_many_exams_filter_url = reverse('exam_module:create_many_exams_filter')
@@ -485,7 +486,7 @@ class CreateManyExamsViewTests(WebTest):
         page = self.app.get(self.create_many_exams_url, user='staff')
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 8
-        filter_form['stream'] = 'unknown'
+        filter_form['stream'] = 6
         filter_form['subject_name'] = 'unknown'
         filter_form['exam_type_name'] = 'unknown'
         filter_form['term_name'] = 'unknown'
@@ -501,7 +502,7 @@ class CreateManyExamsViewTests(WebTest):
         page = self.app.get(self.create_many_exams_url, user='staff')
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 4
-        filter_form['stream'] = 'north'
+        filter_form['stream'] = 1
         filter_form['subject_name'] = 'Python'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'
@@ -522,7 +523,7 @@ class CreateManyExamsViewTests(WebTest):
         page = self.app.get(self.create_many_exams_url, user='staff')
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 4
-        filter_form['stream'] = 'north'
+        filter_form['stream'] = 1
         filter_form['subject_name'] = 'Python'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'
@@ -539,7 +540,7 @@ class CreateManyExamsViewTests(WebTest):
         page = self.app.get(self.create_many_exams_url, user='staff')
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 4
-        filter_form['stream'] = 'north'
+        filter_form['stream'] = 1
         filter_form['subject_name'] = 'Python'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'
@@ -573,7 +574,7 @@ class CreateManyExamsViewTests(WebTest):
         page = self.app.get(self.create_many_exams_url, user='staff')
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 4
-        filter_form['stream'] = 'north'
+        filter_form['stream'] = 1
         filter_form['subject_name'] = 'Python'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'

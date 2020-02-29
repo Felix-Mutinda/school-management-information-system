@@ -5,7 +5,7 @@
         "fields": {
             "user": 1,
             "form": 1,
-            "stream": "east",
+            "stream": 3,
             "reg_no": "1",
             "house": "house 1",
             "date_registered": "2020-02-18 22:33:00",
@@ -18,7 +18,7 @@
         "fields": {
             "user": 2,
             "form": 1,
-            "stream": "west",
+            "stream": 4,
             "reg_no": "2",
             "house": "house 1",
             "date_registered": "2020-02-18 22:33:00",
@@ -31,7 +31,7 @@
         "fields": {
             "user": 3,
             "form": 1,
-            "stream": "west",
+            "stream": 4,
             "reg_no": "3",
             "house": "house 3",
             "date_registered": "2019-02-18 22:33:00",
@@ -44,7 +44,7 @@
         "fields": {
             "user": 4,
             "form": 1,
-            "stream": "north",
+            "stream": 1,
             "reg_no": "4",
             "house": "house 4",
             "date_registered": "2017-02-18 22:33:00",
@@ -57,11 +57,25 @@
         "fields": {
             "user": 5,
             "form": 1,
-            "stream": "north",
+            "stream": 1,
             "reg_no": "5",
             "house": "house 5",
             "date_registered": "2017-02-18 22:33:00",
             "kcpe_marks": 5
+            
+        }
+    },
+    {
+        "model": "accounts.StudentProfile",
+        "pk": 6,
+        "fields": {
+            "user": 6,
+            "form": 1,
+            "stream": 3,
+            "reg_no": "6",
+            "house": "house 6",
+            "date_registered": "2017-02-18 22:33:00",
+            "kcpe_marks": 6
             
         }
     }

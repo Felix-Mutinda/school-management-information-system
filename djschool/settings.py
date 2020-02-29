@@ -137,3 +137,8 @@ MESSAGE_TAGS = {
     messages.SUCCESS: 'alert-success',
     messages.ERROR: 'alert-danger',
 }
+
+# fixtures
+FIXTURE_DIRS = [
+    os.path.join(BASE_DIR, 'fixtures'),
+]

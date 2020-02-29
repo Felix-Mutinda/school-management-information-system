@@ -13,4 +13,6 @@ urlpatterns = [
     path('accounts/register/staff/', accounts_views.register_staff, name='register_staff'),
     path('accounts/staff/', accounts_views.ListStaffView.as_view(), name='list_staff'),
     path('accounts/register/student/', accounts_views.RegisterStudentView.as_view(), name='register_student'),
+    path('accounts/students/', accounts_views.StudentsHomeView.as_view(), name='students_home'),
+    path('accounts/generate/class_list/', accounts_views.GenerateClassListView.as_view(), name='generate_class_list'),
 ]

@@ -10,7 +10,8 @@ from crispy_forms.layout import Layout, Submit, HTML, Field, Fieldset, Div
 
 from .models import (
     StaffProfile,
-    StudentProfile
+    StudentProfile,
+    Stream,
 )
 
 User = get_user_model()
@@ -157,7 +158,7 @@ class RegisterStudentForm(forms.Form):
                     ),
                     Div(
                         Field('student_form', wrapper_class='col'),
-                        Field('student_stream', wrapper_class='col'),
+                        Field('student_stream_name', wrapper_class='col'),
                         Field('student_house', wrapper_class='col'),
                         css_class='form-row',
                     ),
@@ -194,7 +195,7 @@ class RegisterStudentForm(forms.Form):
     student_middle_name = forms.CharField(label='Middle Name', required=False)
     student_last_name = forms.CharField(label='Sir Name')
     student_form = forms.IntegerField(label='Form/ Class', min_value=1)
-    student_stream = forms.CharField(label='Stream')
+    student_stream_name = forms.CharField(label='Stream')
     student_house = forms.CharField(label='Domitory/ House', required=False)
     student_kcpe_marks = forms.IntegerField(label='KCPE Marks', min_value=0, required=False)
     student_date_registered = forms.DateTimeField(label='Date Registered', initial=datetime.datetime.now())
@@ -204,3 +205,68 @@ class RegisterStudentForm(forms.Form):
     guardian_last_name = forms.CharField(label='Sir Name', required=False)
     guardian_phone_number = forms.CharField(label='Phone Number', required=False)
     guardian_email = forms.CharField(label='Email', required=False)
+
+    def clean_student_stream_name(self):
+        stream_name = self.cleaned_data.get('student_stream_name')
+        try:
+            stream = Stream.objects.get(pk=stream_name)
+        except Stream.DoesNotExist:
+            raise forms.ValidationError('This stream is not found.')
+        return stream_name
+
+
+class GenerateClassListForm(forms.Form):
+    '''
+    Validate the form and stream used to generate a class
+    list.
+    '''
+    form = forms.IntegerField(label='Form/ Class')
+    stream_name = forms.CharField(label='Stream')
+    file_type = forms.ChoiceField(label='Choose File Type', widget=forms.RadioSelect, choices=(('0', 'PDF'), ('1', 'EXCEL')))
+
+    def clean_stream_name(self):
+        stream_name = self.cleaned_data.get('stream_name')
+        try:
+            Stream.objects.get(pk=stream_name)
+        except Stream.DoesNotExist:
+            raise forms.ValidationError('This stream is not found.')
+
+        return stream_name
+    
+    def clean(self, *args, **kwargs):
+        super(GenerateClassListForm, self).clean(*args, **kwargs)
+        form = self.cleaned_data.get('form', '')
+        stream_name = self.cleaned_data.get('stream_name', '')
+        if form and stream_name:
+            query_set = StudentProfile.objects.filter(stream__pk=stream_name)
+            students_list = [s for s in query_set if s.get_form() == form]
+            if not students_list:
+                raise forms.ValidationError('No students found in form %s %s.' %(form, stream_name))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.form_action = 'accounts:generate_class_list'
+        self.helper.form_id = 'generate-class-list-form'
+        self.helper.layout = Layout(
+            Fieldset(
+                'Filter Tags',
+                HTML(
+                    '''
+                    {% include '_messages.html' %}
+                    '''
+                ),
+                Div(
+                    Field('form', wrapper_class='col'),
+                    Field('stream_name', wrapper_class='col'),
+                    css_class='form-row',
+                ),
+                Div(
+                    Field('file_type', wrapper_class='col'),
+                    css_class='form-row',
+                ),
+                Submit('submit', 'Generate', css_class='btn btn-primary'),
+                css_class='border rounded p-3',
+            )
+        )

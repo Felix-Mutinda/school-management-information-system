@@ -47,5 +47,17 @@
             "middle_name": "Mid name",
             "last_name": "Last name"
         }
+    },
+    {
+        "model": "accounts.User",
+        "pk": 6,
+        "fields": {
+            "username": "user 6",
+            "is_student": true,
+            "password": "*",
+            "first_name": "User 6",
+            "middle_name": "Mid name",
+            "last_name": "Last name"
+        }
     }
 ]
