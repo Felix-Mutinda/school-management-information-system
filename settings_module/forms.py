@@ -44,3 +44,9 @@ class AddSubjectForm(forms.ModelForm):
         fields = [
             'name',
         ]
+    
+    def clean_name(self):
+        '''
+        Lower the field value to be saved in db.
+        '''
+        return self.cleaned_data.get('name').lower()
