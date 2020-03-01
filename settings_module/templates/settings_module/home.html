@@ -1,0 +1,20 @@
+{% extends 'dashboard.html' %}
+
+{% block dashboard_content %}
+<!-- Deck one-->
+<div class="card-deck mt-3 mb-3 text-center">
+    <!-- Card 1 -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header">
+        <h4 class="my-0 font-weight-normal">Subjects</h4>
+      </div>
+      <div class="card-body">
+        <h2 class="card-title pricing-card-title">Add</h2>
+        <p class=" mt-3 mb-4 p-3">
+          Use this link to Add/Update the subjects offered.
+        </p>
+        <a href="{% url 'settings_module:add_subject' %}" role="button" class="btn btn-lg btn-block btn-outline-primary">Add</a>
+      </div>
+    </div>
+</div>
+{% endblock dashboard_content %}

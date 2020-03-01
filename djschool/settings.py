@@ -29,6 +29,7 @@ INSTALLED_APPS = [
 
     'accounts',
     'exam_module',
+    'settings_module',
 
     'crispy_forms',
 ]

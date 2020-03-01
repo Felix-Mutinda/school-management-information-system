@@ -1,0 +1,36 @@
+{% extends 'dashboard.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block dashboard_content %}
+    <div class="row">
+        <div class="col-md-6">
+            {% crispy add_subject_form %}
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-md-8">
+            <table class="table-bordered table-sm">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th colspan="2">Subject Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subject in subjects %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ subject.name.capitalize }}</td>
+                            <td><a href="{% url 'settings_module:delete_subject' subject.id %}">Delete</a></td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3">No subjects found. Use the form above to add some.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock dashboard_content %}
