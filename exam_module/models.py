@@ -40,3 +40,10 @@ class Exam(models.Model):
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
     date_done = models.DateTimeField()
     marks = models.DecimalField(max_digits=4, decimal_places=2)
+
+class GradingSystem(models.Model):
+    '''
+    Maps a given decimal value to a grade.
+    '''
+    grade = models.CharField(max_length=20, unique=True)
+    greatest_lower_bound = models.DecimalField(max_digits=4, decimal_places=2, unique=True)

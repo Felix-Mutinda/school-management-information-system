@@ -6,10 +6,12 @@ from django.contrib.auth.decorators import login_required
 
 from exam_module.models import (
     Subject,
+    GradingSystem,
 )
 
 from .forms import (
     AddSubjectForm,
+    AddGradingSystemForm,
 )
 
 
@@ -61,3 +63,44 @@ def delete_subject(request, subject_id):
 
         messages.error(request, 'Subject has been deleted.')
         return redirect('settings_module:add_subject')
+
+class AddGradingSystemView(LoginRequiredMixin, View):
+    '''
+    A grade corresponds to a greatest lower bound.
+    '''
+    form_class = AddGradingSystemForm
+    template_name = 'settings_module/add_grading_system.html'
+
+    def get(self, request, *args, **kwargs):
+
+        add_grading_system_form = self.form_class()
+        return render(request, self.template_name, {
+            'add_grading_system_form': add_grading_system_form,
+            'grading_systems': self.get_query_set(),
+        })
+    
+    def post(self, request, *args, **kwargs):
+
+        add_grading_system_form = self.form_class(request.POST)
+        if add_grading_system_form.is_valid():
+            add_grading_system_form.save()
+
+            messages.success(request, 'Grading System updated successfully.')
+            return redirect('settings_module:add_grading_system')
+
+        return render(request, self.template_name, {
+            'add_grading_system_form': add_grading_system_form,
+            'grading_systems': self.get_query_set(),
+        })
+
+    def get_query_set(self):
+        return GradingSystem.objects.all().order_by('-greatest_lower_bound')
+
+@login_required
+def delete_grading_system(request, grading_system_id):
+    if request.method == 'GET':
+        grading_system = get_object_or_404(GradingSystem, pk=grading_system_id)
+        grading_system.delete()
+
+        messages.error(request, 'Grading system entry has been deleted.')
+        return redirect('settings_module:add_grading_system')
