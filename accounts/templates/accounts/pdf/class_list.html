@@ -1,0 +1,26 @@
+{% load static %}
+
+<H2 align="center">{{ title }}</H2>
+
+<table border="1" align="center" width="100%">
+    <thead>
+        <tr>
+            <th width="5%">No.</th>
+            <th width="15%">Reg No.</th>
+            <th width="40%">Name</th>
+            <th width="20%"> </th>
+            <th width="20%"> </th>
+        </tr>
+    </thead>
+    <tbody border="1">
+        {% for student in students_list %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ student.reg_no }}</td>
+                <td>{{ student.user.first_name }} {{ student.user.middle_name }} {{ student.user.last_name }}</td>
+                <td> </td>
+                <td> </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

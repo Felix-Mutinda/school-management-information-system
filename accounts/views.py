@@ -17,6 +17,9 @@ from django import forms
 from django.utils.translation import gettext as _
 from django.contrib import messages
 from django.http import HttpResponse
+from django.template.loader import get_template, render_to_string
+
+from fpdf import FPDF, HTMLMixin
 
 from crispy_forms.layout import (
     Layout,
@@ -41,7 +44,12 @@ from .models import (
 
 from.helpers import get_student_and_guardian_forms
 
+
 User = get_user_model()
+
+# generate pdf responses with fpdf
+class HtmlPdf(FPDF, HTMLMixin):
+    pass
 
 class HomeView(LoginRequiredMixin, TemplateView):
     '''
@@ -209,12 +217,58 @@ class GenerateClassListView(LoginRequiredMixin, View):
             students_list = [s for s in query_set if s.get_form() == f]
 
             if file_type == '0':
-                response = HttpResponse(content_type='application/pdf')
+                pdf = HtmlPdf()
+                pdf.add_page()
+
+                # pdf.write_html(render_to_string('accounts/pdf/class_list.html', {
+                #     'title': 'Form %d %s' % (f, stream_name.capitalize()),
+                #     'students_list': students_list
+                # }))
+
+                # Effective page width, or just epw
+                epw = pdf.w - 2*pdf.l_margin
+
+                # table title
+                title = 'Form %d %s' % (f, stream_name.capitalize())
+                pdf.set_font('Times', 'B', 16)
+                pdf.cell(epw, 0.0, title, align='C')
+                pdf.ln(4)
+
+                # text height
+                th = pdf.font_size
+
+                # table header
+                pdf.set_font('Times', 'B', 14)
+                pdf.cell(epw*0.05, th, 'No.', border=1, align='C') # 0.5% of epw
+                pdf.cell(epw*0.15, th, 'Reg No.', border=1, align='C')
+                pdf.cell(epw*0.40, th, 'Name', border=1, align='C')
+                pdf.cell(epw*0.20, th, '', border=1, align='C')
+                pdf.cell(epw*0.20, th, '', border=1, align='C')
+                pdf.ln(th)
+
+                # table body
+                pdf.set_font('Times', '', 12)
+                i = 1
+                for student in students_list:
+                    student_full_name = '%s %s %s' % (student.user.first_name, student.user.middle_name, student.user.last_name)
+                    pdf.cell(epw*0.05, th, str(i), border=1) # 0.5% of epw
+                    pdf.cell(epw*0.15, th, str(student.reg_no), border=1)
+                    pdf.cell(epw*0.40, th, student_full_name, border=1)
+                    pdf.cell(epw*0.20, th, '', border=1)
+                    pdf.cell(epw*0.20, th, '', border=1)
+                    pdf.ln()
+                    i += 1
+
+
+                response = HttpResponse(pdf.output(dest='S').encode('latin-1'))
+                response['Content-Type'] = 'application/pdf'
+                response['Content-Disposition'] = 'inline; filename="Form %s %s.pdf"' %(f,stream_name.capitalize())
+
                 messages.success(request, 'File has been generated.')
                 return response
             else:
                 response = HttpResponse(content_type='text/csv')
-                response['Content-Disposition'] = 'attachment; filename="form %s %s.csv"' %(f,stream_name)
+                response['Content-Disposition'] = 'attachment; filename="Form %s %s.csv"' %(f,stream_name.capitalize())
 
                 i = 1
                 writer = csv.writer(response)

@@ -188,7 +188,6 @@ class AddGradingSystemViewTests(WebTest):
         page.form['grade']  = 'c-'
         page.form['greatest_lower_bound'] = 45
         page = page.form.submit().follow()
-        page.showbrowser()
         self.assertContains(page, 'Grading System updated successfully.')
         self.assertContains(page, 'C-')
         self.assertContains(page, '45')

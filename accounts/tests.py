@@ -779,6 +779,19 @@ class GenerateClassListViewTests(WebTest):
         self.assertEqual(page.status_code, 200)
         # page.showbrowser()
         self.assertEqual(page.content_type, 'text/csv')
+    
+    def test_form_with_valid_data_file_type_pdf(self):
+        '''
+        Redirect to selected file type.
+        '''
+        page = self.app.get(self.generate_class_list_url, user='staff')
+        page.form['form'] = 1
+        page.form['stream_name'] = 'west'
+        page.form['file_type'] = '0'
+        page = page.form.submit()
+        self.assertEqual(page.status_code, 200)
+        # page.showbrowser()
+        self.assertEqual(page.content_type, 'application/pdf')
 
 
 class GenerateClassListFormTests(TestCase):
