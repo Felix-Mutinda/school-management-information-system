@@ -42,8 +42,12 @@ from .models import (
     StudentProfile,
 )
 
-from.helpers import get_student_and_guardian_forms
+from.helpers import (
+    get_student_and_guardian_forms,
+    add_subject_done_by_student
+)
 
+from exam_module.models import SubjectsDoneByStudent
 
 User = get_user_model()
 
@@ -168,6 +172,20 @@ class RegisterStudentView(LoginRequiredMixin, View):
                     user=guardian_user,
                     student=student_profile
                 )
+
+                # subjects done by student
+                subjects_done_by_student = form.cleaned_data.get('student_subjects_done_by_student')
+                
+                # update subjects done
+                # first remove all entries in db.
+                reg_no = form.cleaned_data.get('student_reg_no')
+                sd_b4 = SubjectsDoneByStudent.objects.filter(student=StudentProfile.objects.get(reg_no=reg_no))
+                for sd in sd_b4:
+                    sd.delete()
+                
+                for sd in subjects_done_by_student: # from submitted form
+                    add_subject_done_by_student(reg_no, sd)
+                
                 messages.success(request, 'Student successfully registered.')
                 return redirect(reverse('accounts:register_student'))
 
@@ -320,6 +338,7 @@ class UpdateStudentView(LoginRequiredMixin, View):
             'student_house': student.house,
             'student_kcpe_marks': student.kcpe_marks,
             'student_date_registered': student.date_registered,
+            'student_subjects_done_by_student': [sd.subject.name for sd in SubjectsDoneByStudent.objects.filter(student=student)],
 
             'guardian_first_name': student.guardian.user.first_name,
             'guardian_middle_name': student.guardian.user.middle_name,
@@ -355,6 +374,19 @@ class UpdateStudentView(LoginRequiredMixin, View):
                 student_profile_form.save()
                 guardian_user_form.save()
                 
+                # subjects done by student
+                subjects_done_by_student = form.cleaned_data.get('student_subjects_done_by_student')
+                
+                # update subjects done
+                # first remove all entries in db.
+                reg_no = form.cleaned_data.get('student_reg_no')
+                sd_b4 = SubjectsDoneByStudent.objects.filter(student=StudentProfile.objects.get(reg_no=reg_no))
+                for sd in sd_b4:
+                    sd.delete()
+                
+                for sd in subjects_done_by_student: # from submitted form
+                    add_subject_done_by_student(reg_no, sd)
+                    
                 messages.success(request, 'Student Details Updated Successfully.')
                 return redirect(reverse('accounts:update_student', args=(student.reg_no,)))
 

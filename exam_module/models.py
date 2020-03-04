@@ -47,3 +47,10 @@ class GradingSystem(models.Model):
     '''
     grade = models.CharField(max_length=20, unique=True)
     greatest_lower_bound = models.DecimalField(max_digits=4, decimal_places=2, unique=True)
+
+class SubjectsDoneByStudent(models.Model):
+    '''
+    Allows for students to do selected subjects not all.
+    '''
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)

@@ -20,6 +20,7 @@ from .models import (
 from .forms import (
     CreateExamForm,
     CreateManyExamsFilterForm,
+    ExamReportsFilterForm,
 )
 
 class ExamModelTests(TestCase):
@@ -581,3 +582,109 @@ class CreateManyExamsViewTests(WebTest):
         entry_form['5_marks'] = 'nan'
         page = entry_form.submit()
         self.assertContains(page, 'Marks for registration numbers (%s, %s) have errors.' % ('4', '5'))
+
+
+class ExamReportsView(WebTest):
+    '''
+    Exam reports home. Renderes quick links to generate
+    various exam reports and student result slips.
+    '''
+
+    def setUp(self):
+        self.login_url = reverse('accounts:login')
+        self.exam_reports_home_view_url = reverse('exam_module:exam_reports_home')
+
+    def test_requires_login(self):
+        page = self.app.get(self.exam_reports_home_view_url)
+        self.assertRedirects(
+            page,
+            self.login_url+'?next='+self.exam_reports_home_view_url
+        )
+    
+    def test_the_required_links_displayed(self):
+        page = self.app.get(self.exam_reports_home_view_url, user='staff')
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, reverse('exam_module:generate_exam_reports'))
+
+
+class GenerateExamReportsFilterFormTests(TestCase):
+    '''
+    A form to filter students to show report for, and
+    the exam types used to compute the final grade.
+    '''
+    fixtures = ['student_profiles', 'streams', 'users']
+
+    def test_form_with_no_data(self):
+        form = ExamReportsFilterForm({})
+        self.assertFalse(form.is_valid())
+    
+    def test_form_with_invalid_data(self):
+        form = ExamReportsFilterForm({
+            'form': 8,
+            'stream': 'west',
+            'subject': 'all',
+            'exam_types': ['Opener']
+        })
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.non_field_errors(), ['No students found in form %s %s.' %(8, 'west')])
+
+    def test_form_with_valid_data(self):
+        form = ExamReportsFilterForm({
+            'form': 1,
+            'stream': 'east',
+            'subject': 'all',
+            'exam_types': ['Opener', 'Mid Term', 'End Term'],
+            'term': '1',
+        })
+        self.assertTrue(form.is_valid())
+
+class GenerateExamReportsViewTests(WebTest):
+
+    fixtures = ['student_profiles', 'streams', 'users']
+
+    def setUp(self):
+        self.login_url = reverse('accounts:login')
+        self.exam_reports_view_url = reverse('exam_module:generate_exam_reports')
+    
+    def test_requires_login(self):
+        page = self.app.get(self.exam_reports_view_url)
+        self.assertRedirects(
+            page,
+            self.login_url+'?next='+self.exam_reports_view_url
+        )
+    
+    def test_filter_form_is_rendered(self):
+        '''
+        The form to apply filters should be rendered.
+        '''
+        page = self.app.get(self.exam_reports_view_url, user='staff')
+        self.assertEqual(page.status_code, 200)
+        self.assertTrue(len(page.forms) >= 1)
+        self.assertEqual(page.form.action, self.exam_reports_view_url)
+    
+    def test_filter_view_with_no_data(self):
+        '''
+        All the fields are required.
+        '''
+        page = self.app.get(self.exam_reports_view_url, user='staff')
+        page = page.form.submit()
+        self.assertContains(page, 'This field is required')
+    
+    def test_filter_view_form_with_invalid_data(self):
+        page = self.app.get(self.exam_reports_view_url, user='staff')
+        page.form['form'] = 8
+        page.form['stream'] = 'east'
+        page.form['subject'] =  'all'
+        page.form['exam_types'] = ['Opener', 'Mid Term']
+        page = page.form.submit()
+        self.assertContains(page, 'No students found in form %s %s.' % (8, 'east'))
+
+    def test_filter_view_form_with_valid_data(self):
+        page = self.app.get(self.exam_reports_view_url, user='staff')
+        page.form['form'] = 1
+        page.form['stream']  = 'east'
+        page.form['subject']  = 'all'
+        page.form['exam_types'] = ['Opener', 'Mid Term', 'End Term']
+        page.form['term'] = 1
+        page = page.form.submit()
+        self.assertEqual(page.content_type, 'application/pdf')

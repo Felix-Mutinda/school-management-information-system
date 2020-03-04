@@ -65,33 +65,9 @@
           </h6>
           <ul class="nav flex-column mb-2">
             <li class="nav-item">
-              <a class="nav-link" href="#">
+              <a class="nav-link" href="{% url 'exam_module:exam_reports_home' %}">
                 <span data-feather="file-text"></span>
-                Overall
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">
-                <span data-feather="file-text"></span>
-                Form 4
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">
-                <span data-feather="file-text"></span>
-                Form 3
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">
-                <span data-feather="file-text"></span>
-                Form 2
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">
-                <span data-feather="file-text"></span>
-                Form 1
+                Exam Reports
               </a>
             </li>
           </ul>
@@ -172,7 +148,7 @@
               <p class=" mt-3 mb-4 p-3">
                 Use this link to View various exam reports.
               </p>
-              <button type="button" class="btn btn-lg btn-block btn-outline-primary">View</button>
+              <a href="{% url 'exam_module:exam_reports_home' %}" role="button" class="btn btn-lg btn-block btn-outline-primary">View</a>
             </div>
           </div>
 

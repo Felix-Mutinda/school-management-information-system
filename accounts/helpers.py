@@ -3,7 +3,9 @@ from .forms import (
     StudentProfileForm,
 )
 
-from .models import Stream
+from .models import Stream, StudentProfile
+
+from exam_module.models import Subject, SubjectsDoneByStudent
 
 # Registering and updating users requires reading values
 # from the general RegisterStudentForm and breaking it 
@@ -51,3 +53,19 @@ def get_student_and_guardian_forms(d, student=None):
     }, instance=student.guardian.user if student else None)
 
     return (f1, f2, f3)
+
+def add_subject_done_by_student(reg_no, subject_name):
+    '''
+    Get a student with the given reg_no and add an 
+    entry in SubjectsDoneByStudent to represent a 
+    subject done by this student. Only adds if the
+    entry does not exist.
+    '''
+    student = StudentProfile.objects.get(reg_no=reg_no)
+    subject = Subject.objects.get(name=subject_name)
+
+    try:
+        _ = SubjectsDoneByStudent.objects.get(student=student, subject=subject)
+    except SubjectsDoneByStudent.DoesNotExist:
+        _ = SubjectsDoneByStudent.objects.create(student=student, subject=subject)
+    return _

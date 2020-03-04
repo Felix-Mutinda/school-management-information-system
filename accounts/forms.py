@@ -14,10 +14,13 @@ from .models import (
     Stream,
 )
 
+from exam_module.models import Subject
+
 User = get_user_model()
 
 # choices
-STREAMS = [(stream.name, stream.name.capitalize) for stream in Stream.objects.all()]
+STREAMS = [(stream.name, stream.name.capitalize()) for stream in Stream.objects.all()]
+SUBJECTS = [(subject.name, subject.name.capitalize()) for subject in Subject.objects.all()]
 
 class StaffLoginForm(forms.Form):
 
@@ -158,6 +161,11 @@ register_update_student_common_layout = Layout(
             Field('student_date_registered', wrapper_class='col'),
             css_class='form-row',
         ),
+        Fieldset(
+            'Subjects Done By The Student',
+            Field('student_subjects_done_by_student'),
+            css_class='p-2 mb-2 border rounded',
+        ),
         css_class='p-2 mb-2 border rounded',
     ),
     Fieldset(
@@ -207,6 +215,8 @@ class RegisterStudentForm(forms.Form):
     student_house = forms.CharField(label='Domitory/ House', required=False)
     student_kcpe_marks = forms.IntegerField(label='KCPE Marks', min_value=0, required=False)
     student_date_registered = forms.DateTimeField(label='Date Registered', initial=datetime.datetime.now())
+    # the subjects done by the student
+    student_subjects_done_by_student = forms.MultipleChoiceField(label='Select Subjects', widget=forms.CheckboxSelectMultiple, choices=SUBJECTS)
 
     guardian_first_name = forms.CharField(label='First Name', required=False)
     guardian_middle_name = forms.CharField(label='Middle Name', required=False)

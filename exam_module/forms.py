@@ -1,3 +1,5 @@
+import datetime
+
 from django import forms
 
 from crispy_forms.helper import FormHelper
@@ -209,3 +211,68 @@ class CreateManyExamsFilterForm(forms.Form):
                             year_offset,
                         )
                     )
+
+class ExamReportsFilterForm(forms.Form):
+    '''
+    Used to apply filters to get students, and specify exam types
+    used to compute the student final grade.
+    '''
+    form = forms.IntegerField()
+    stream = forms.ChoiceField(widget=forms.Select, choices=[('all', 'All')] + STREAMS)
+    subject = forms.ChoiceField(widget=forms.Select, choices=[('all', 'All')] + SUBJECTS)
+    exam_types = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple, choices=EXAM_TYPES)
+    term = forms.ChoiceField(widget=forms.Select, choices=TERMS)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_id = 'exam-reports-filter-form'
+        self.helper.form_method  = 'post'
+        self.helper.form_action = 'exam_module:generate_exam_reports'
+        self.helper.layout = Layout(
+            Fieldset(
+                'Filter Tags',
+                HTML(
+                    '''
+                    {% include '_messages.html' %}
+                    '''
+                ),
+                Div(
+                    Field('form', wrapper_class='col'),
+                    Field('stream', wrapper_class='col'),
+                    css_class='form-row',
+                ),
+                Div(
+                    Field('subject', wrapper_class='col'),
+                    Field('term', wrapper_class='col'),
+                    css_class='form-row',
+                ),
+                Field('exam_types'),
+                Submit('submit', 'Generate', css_class='btn btn-primary'),
+                css_class='p-3 border rounded',
+            )
+        )
+    
+    def clean(self, *args, **kwargs):
+        '''
+        There should be students in the given form, stream on that
+        particular date_done year.
+        '''
+
+        super().clean(*args, **kwargs)
+        year_offset = datetime.datetime.now().year
+        if 'form' in self.cleaned_data and 'stream' in self.cleaned_data:
+            form = self.cleaned_data.get('form')
+            stream = self.cleaned_data.get('stream')
+            if stream == 'all':
+                query_set = StudentProfile.objects.all()
+            else:
+                query_set = StudentProfile.objects.filter(stream__name=stream)
+            students_list = [s for s in query_set if s.get_form(year_offset) == form]
+            if not students_list:
+                raise forms.ValidationError(
+                    'No students found in form %s %s.' %(
+                        form,
+                        stream,
+                    )
+                )

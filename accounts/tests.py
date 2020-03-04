@@ -506,7 +506,7 @@ class StaffListViewTests(TestCase):
 
 class RegisterStudentViewTests(WebTest):
 
-    fixtures = ['streams']
+    fixtures = ['streams', 'subjects']
 
     def setUp(self):
         '''
@@ -547,6 +547,7 @@ class RegisterStudentViewTests(WebTest):
         self.assertTrue('student_house' in page.form.fields)
         self.assertTrue('student_kcpe_marks' in page.form.fields)
         self.assertTrue('student_date_registered' in page.form.fields)
+        self.assertTrue('student_subjects_done_by_student' in page.form.fields)
         self.assertTrue('guardian_first_name' in page.form.fields)
         self.assertTrue('guardian_middle_name' in page.form.fields)
         self.assertTrue('guardian_last_name' in page.form.fields)
@@ -590,6 +591,7 @@ class RegisterStudentViewTests(WebTest):
         page.form['student_form'] = 1
         page.form['student_stream_name'] = 'west'
         page.form['student_date_registered'] = datetime.datetime.now()
+        page.form['student_subjects_done_by_student'] = ['Python', 'Mathematics']
         # page.showbrowser()
         page = page.form.submit().follow()
         self.assertNotContains(page, 'This field is required.')
@@ -609,6 +611,7 @@ class RegisterStudentViewTests(WebTest):
         page.form['student_form'] = '1'
         page.form['student_stream_name'] = 'east'
         page.form['student_date_registered'] = datetime.datetime.now()
+        page.form['student_subjects_done_by_student'] = ['Python', 'Mathematics']
         page = page.form.submit().follow()
 
         # second student instance - since its a replica, 
@@ -619,6 +622,7 @@ class RegisterStudentViewTests(WebTest):
         page.form['student_form'] = '1'
         page.form['student_stream_name'] = 'east'
         page.form['student_date_registered'] = datetime.datetime.now()
+        page.form['student_subjects_done_by_student'] = ['Python', 'Mathematics']
         page = page.form.submit()
         # should report the error on same page, i.e. 200 not 302(success)
         self.assertEqual(page.status_code, 200)
@@ -657,8 +661,10 @@ class RegisterStudentFormTests(TestCase):
             'student_last_name': 'last_name',
             'student_form': '2',
             'student_stream_name': 'east',
-            'student_date_registered': timezone.now()
+            'student_date_registered': timezone.now(),
+            'student_subjects_done_by_student': ['Python', 'Mathematics']
         })
+        # print(form.errors)
         self.assertTrue(form.is_valid())
     
 class StudentProfileModelTests(TestCase):
@@ -924,7 +930,7 @@ class UpdateStudentViewTests(WebTest):
     and thus that form will not be tested again for validations.
     '''
 
-    fixtures = ['users', 'student_profiles', 'streams', 'guardian_profiles']
+    fixtures = ['users', 'student_profiles', 'streams', 'guardian_profiles', 'subjects']
 
     def setUp(self):
         self.login_url = reverse('accounts:login')
@@ -974,6 +980,7 @@ class UpdateStudentViewTests(WebTest):
         page.form['student_house'] = 'cube'
         page.form['student_kcpe_marks'] = '384'
         page.form['student_date_registered'] = '2020-01-01 22:33:00'
+        page.form['student_subjects_done_by_student'] = ['Python', 'Mathematics']
         page.form['guardian_first_name'] = 'new_g-first'
         page.form['guardian_middle_name'] = 'new_g-middle'
         page.form['guardian_last_name'] = 'new_g-last'
@@ -992,6 +999,7 @@ class UpdateStudentViewTests(WebTest):
         self.assertEqual(page.form['student_house'].value, 'cube')
         self.assertEqual(page.form['student_kcpe_marks'].value, '384')
         self.assertEqual(page.form['student_date_registered'].value, '2020-01-01 22:33:00')
+        #self.assertEqual(page.form['student_subjects_done_by_student'], ['Python', 'Mathematics'])
         self.assertEqual(page.form['guardian_first_name'].value, 'new_g-first')
         self.assertEqual(page.form['guardian_middle_name'].value, 'new_g-middle')
         self.assertEqual(page.form['guardian_last_name'].value, 'new_g-last')
