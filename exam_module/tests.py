@@ -640,7 +640,7 @@ class GenerateExamReportsFilterFormTests(TestCase):
 
 class GenerateExamReportsViewTests(WebTest):
 
-    fixtures = ['student_profiles', 'streams', 'users']
+    fixtures = ['student_profiles', 'streams', 'users', 'subjects', 'subjects_done_by_student']
 
     def setUp(self):
         self.login_url = reverse('accounts:login')
@@ -681,8 +681,8 @@ class GenerateExamReportsViewTests(WebTest):
 
     def test_filter_view_form_with_valid_data(self):
         page = self.app.get(self.exam_reports_view_url, user='staff')
-        page.form['form'] = 1
-        page.form['stream']  = 'east'
+        page.form['form'] = 2
+        page.form['stream']  = 'west'
         page.form['subject']  = 'all'
         page.form['exam_types'] = ['Opener', 'Mid Term', 'End Term']
         page.form['term'] = 1

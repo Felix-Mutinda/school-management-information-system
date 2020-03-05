@@ -1,0 +1,58 @@
+[
+    {
+        "model": "exam_module.SubjectsDoneByStudent",
+        "pk": 1,
+        "fields": {
+            "student": 1,
+            "subject": 3
+        }
+    },
+    {
+        "model": "exam_module.SubjectsDoneByStudent",
+        "pk": 2,
+        "fields": {
+            "student": 2,
+            "subject": 3
+        }
+    },
+    {
+        "model": "exam_module.SubjectsDoneByStudent",
+        "pk": 3,
+        "fields": {
+            "student": 3,
+            "subject": 3
+        }
+    },
+    {
+        "model": "exam_module.SubjectsDoneByStudent",
+        "pk": 4,
+        "fields": {
+            "student": 4,
+            "subject": 3
+        }
+    },
+    {
+        "model": "exam_module.SubjectsDoneByStudent",
+        "pk": 5,
+        "fields": {
+            "student": 5,
+            "subject": 3
+        }
+    },
+    {
+        "model": "exam_module.SubjectsDoneByStudent",
+        "pk": 6,
+        "fields": {
+            "student": 6,
+            "subject": 3
+        }
+    },
+    {
+        "model": "exam_module.SubjectsDoneByStudent",
+        "pk": 7,
+        "fields": {
+            "student": 7,
+            "subject": 3
+        }
+    }
+]

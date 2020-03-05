@@ -365,7 +365,54 @@ class GenerateExamReportsView(LoginRequiredMixin, View):
             # table body
             tmp = []
             if subject_name == 'all': # report for all subjects
-                pass
+                for student in students_list:
+                    exam_objects = Exam.objects.filter(
+                        student = student,
+                        term__name = term_name,
+                    )
+                    # just an extra precaution.
+                    # get the exam objects if their subjects belong to the
+                    # subjects done by this student.
+                    subjects_done_by_student = SubjectsDoneByStudent.objects.filter(student=student)
+                    exam_objects = [eo for eo in exam_objects if eo.subject.name in [sd.subject.name for sd in subjects_done_by_student]]
+                    tmp_entry = {
+                        'student': student,
+                        'total': 0.0,
+                    }
+                    for exam_object in exam_objects:
+                        if exam_object.exam_type.name in exam_types_names:
+                            tmp_entry['total'] += float(exam_object.marks)
+                    tmp.append(tmp_entry)
+                # sort tmp based on total marks
+                tmp.sort(key=lambda t: t['total'], reverse=True)
+
+                # output tmp
+                # thead
+                pdf.set_font('Times', 'B', 13); th = pdf.font_size # text height
+                pdf.cell(epw*0.05, th, 'No.', border=1, align='C') # 0.5% of epw
+                pdf.cell(epw*0.15, th, 'Reg No.', border=1, align='C')
+                pdf.cell(epw*0.40, th, 'Name', border=1, align='C')
+                pdf.cell(epw*0.20, th, 'Average', border=1, align='C')
+                pdf.cell(epw*0.20, th, 'Grade', border=1, align='C')
+                pdf.ln(th)
+
+                # tbody
+                for i,v in enumerate(tmp):
+                    pdf.set_font('Times', '', 12); th = pdf.font_size
+                    pdf.cell(epw*0.05, th, str(i+1), border=1) # 0.5% of epw
+                    pdf.cell(epw*0.15, th, v['student'].reg_no, border=1)
+
+                    u = v['student'].user
+                    pdf.cell(epw*0.40, th, '%s %s %s' %(u.first_name, u.middle_name, u.last_name), border=1)
+
+                    tet = len(exam_types_names) # total exam types names
+                    no_of_subjects_done_by_student = SubjectsDoneByStudent.objects.filter(student=v['student']).count()
+                    avg = round(v['total'] / (tet * no_of_subjects_done_by_student), 2) # compute avegare
+                    pdf.cell(epw*0.20, th, str(avg), border=1, align='C')
+                    
+                    pdf.cell(epw*0.20, th, get_grade(avg), border=1, align='C') # use get_grade utility
+                    pdf.ln(th)
+
             else: # report for a particular subject
                 # get students who do that subject
                 students_list = [s for s in students_list if subject_name in [sd.subject.name for sd in SubjectsDoneByStudent.objects.filter(student=s)]]
@@ -387,7 +434,7 @@ class GenerateExamReportsView(LoginRequiredMixin, View):
                     tmp.append(tmp_entry)
                 # sort tmp
                 tmp.sort(key=lambda t: t['total'], reverse=True)
-                
+
                 # output tmp
                 # thead
                 tet = len(exam_types_names) # total exam types names

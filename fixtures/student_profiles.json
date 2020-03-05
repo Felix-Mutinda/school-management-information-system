@@ -1,7 +1,7 @@
 [
     {
         "model": "accounts.StudentProfile",
-        "pk": 2,
+        "pk": 1,
         "fields": {
             "user": 1,
             "form": 1,
