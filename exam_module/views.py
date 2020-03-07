@@ -22,7 +22,9 @@ from accounts.models import StudentProfile
 from .forms import (
     CreateExamForm,
     CreateManyExamsFilterForm,
-    ExamReportsFilterForm
+    ExamReportsFilterForm,
+    GenerateResultsSlipPerStudentFilterForm,
+    GenerateResultsSlipPerClassFilterForm,
 )
 from .models import (
     Subject,
@@ -31,7 +33,7 @@ from .models import (
     Exam,
     SubjectsDoneByStudent,
 )
-from .utils import get_grade
+from .utils import get_grade, get_student_position
 
 
 class HomeView(LoginRequiredMixin, View):
@@ -94,6 +96,10 @@ class CreateManyExamsFilterView(LoginRequiredMixin, View):
             form = create_many_exams_filter_form.cleaned_data.get('form')
             stream = create_many_exams_filter_form.cleaned_data.get('stream')
             date_done = create_many_exams_filter_form.cleaned_data.get('date_done')
+            
+            subject_name = create_many_exams_filter_form.cleaned_data.get('subject_name')
+            exam_type_name = create_many_exams_filter_form.cleaned_data.get('exam_type_name')
+            term_name = create_many_exams_filter_form.cleaned_data.get('term_name')
 
             # get students in the given form and stream.
             # form is determined using date_done.year 
@@ -101,10 +107,9 @@ class CreateManyExamsFilterView(LoginRequiredMixin, View):
             query_set = StudentProfile.objects.filter(stream__name=stream)
             student_list = [s for s in query_set if s.get_form(year_since_registration) == form]
 
-            subject_name = create_many_exams_filter_form.cleaned_data.get('subject_name')
-            exam_type_name = create_many_exams_filter_form.cleaned_data.get('exam_type_name')
-            term_name = create_many_exams_filter_form.cleaned_data.get('term_name')
-
+            # filter those students who do this particular subject
+            student_list = [s for s in student_list if subject_name in [sd.subject.name for sd in SubjectsDoneByStudent.objects.filter(student=s)]]
+            
             # Create a runtime students-exams-entry-form.
             # Embed the subject_name, exam_type_name, term_name and date_done
             # from filter view as hidden inputs. This will be needed to create
@@ -378,13 +383,20 @@ class GenerateExamReportsView(LoginRequiredMixin, View):
                     tmp_entry = {
                         'student': student,
                         'total': 0.0,
+                        'avg': 0.0,
                     }
                     for exam_object in exam_objects:
                         if exam_object.exam_type.name in exam_types_names:
                             tmp_entry['total'] += float(exam_object.marks)
+
+                    tet = len(exam_types_names) # total exam types names
+                    no_of_subjects_done_by_student = SubjectsDoneByStudent.objects.filter(student=student).count()
+                    avg = round(tmp_entry['total'] / (tet * no_of_subjects_done_by_student), 2) # compute avegare
+                    tmp_entry['avg'] = avg
                     tmp.append(tmp_entry)
-                # sort tmp based on total marks
-                tmp.sort(key=lambda t: t['total'], reverse=True)
+
+                # sort tmp based on avg 
+                tmp.sort(key=lambda t: t['avg'], reverse=True)
 
                 # output tmp
                 # thead
@@ -404,13 +416,9 @@ class GenerateExamReportsView(LoginRequiredMixin, View):
 
                     u = v['student'].user
                     pdf.cell(epw*0.40, th, '%s %s %s' %(u.first_name, u.middle_name, u.last_name), border=1)
-
-                    tet = len(exam_types_names) # total exam types names
-                    no_of_subjects_done_by_student = SubjectsDoneByStudent.objects.filter(student=v['student']).count()
-                    avg = round(v['total'] / (tet * no_of_subjects_done_by_student), 2) # compute avegare
-                    pdf.cell(epw*0.20, th, str(avg), border=1, align='C')
+                    pdf.cell(epw*0.20, th, str(v['avg']), border=1, align='C')
                     
-                    pdf.cell(epw*0.20, th, get_grade(avg), border=1, align='C') # use get_grade utility
+                    pdf.cell(epw*0.20, th, get_grade(v['avg']), border=1, align='C') # use get_grade utility
                     pdf.ln(th)
 
             else: # report for a particular subject
@@ -470,8 +478,6 @@ class GenerateExamReportsView(LoginRequiredMixin, View):
 
             response = HttpResponse(pdf.output(dest='S').encode('latin-1'))
             response['Content-Type'] = 'application/pdf'
-
-            
             response['Content-Disposition'] = 'inline; filename="%s.pdf"' %(title)
 
             messages.success(request, 'Exam report has been generated.')
@@ -480,3 +486,276 @@ class GenerateExamReportsView(LoginRequiredMixin, View):
         return render(request, self.template_name, {
             'exam_reports_filter_form': form
         })
+    
+class GenerateResultsSlipPerStudentView(LoginRequiredMixin, View):
+    '''
+    renders a form to get a student by reg_no, constructs a pdf
+    result slip if student is found.
+    '''
+
+    form_class = GenerateResultsSlipPerStudentFilterForm
+    template_name = 'exam_module/generate_results_slip_per_student.html'
+
+    def get(self, request):
+        form = self.form_class(request.GET or None)
+        if form.is_valid():
+            reg_no = form.cleaned_data.get('reg_no')
+            exam_types_names = form.cleaned_data.get('exam_types_names')
+            term_name = form.cleaned_data.get('term_name')
+
+            student = StudentProfile.objects.get(reg_no=reg_no)
+            full_name = '%s %s %s' % (student.user.first_name, student.user.middle_name, student.user.last_name)
+
+            # pdf
+            pdf = FPDF()
+            pdf.add_page()
+
+            # Effective page width, or just epw
+            epw = pdf.w - 2*pdf.l_margin
+
+            # Effective page height, or just eph
+            eph = pdf.h - 2*pdf.b_margin
+
+            # result slip 
+            # header
+            title = 'High School'
+            subtitle = 'Results Slip'
+            pdf.set_font('Times', 'B', 16); th = pdf.font_size
+            pdf.cell(epw, th+2, title, align='C', ln=1)
+            pdf.set_font('Times', 'B', 14); th = pdf.font_size
+            pdf.cell(epw, th+2, subtitle, align='C', ln=1, border='B')
+            pdf.ln(4)
+
+            # table
+            # title
+            pdf.set_font('Times', 'B', 12); th = pdf.font_size + 1
+            pdf.cell(epw*0.25, th, 'Registration Number: ')
+            pdf.set_font('Times', '', 12)
+            pdf.cell(epw*0.20, th, '%s' % (student.reg_no))
+            pdf.set_font('Times', 'B', 12)
+            pdf.cell(epw*0.20, th, 'Name: ')
+            pdf.set_font('Times', '', 12)
+            pdf.cell(epw*0.25, th, '%s' % (full_name), ln=1)
+            pdf.set_font('Times', 'B', 12)
+            pdf.cell(epw*0.25, th, 'Form: ')
+            pdf.set_font('Times', '', 12)
+            pdf.cell(epw*0.20, th, '%s %s' % (student.get_form(), student.stream.name))
+            pdf.set_font('Times', 'B', 12)
+            pdf.cell(epw*0.20, th, 'Term: ')
+            pdf.set_font('Times', '', 12)
+            pdf.cell(epw*0.25, th, '%s %s' % (term_name, datetime.datetime.now().year), ln=1)
+            pdf.ln(2)
+
+            # thead
+            pdf.set_font('Times', 'B', 12); th = pdf.font_size * 1.5
+            pdf.cell(epw*0.05, th, 'No.', align='C', border=1)
+            pdf.cell(epw*0.40, th, 'Subjects', align='C', border=1)
+            pdf.cell(epw*0.25, th, 'Average', align='C', border=1)
+            pdf.cell(epw*0.25, th, 'Grade', align='C', border=1)
+            pdf.ln()
+
+            # tbody
+            subjects_done_by_student = SubjectsDoneByStudent.objects.filter(student=student)
+            exam_objects = Exam.objects.filter(student=student, term__name=term_name)
+            tet = len(exam_types_names) # total exam types requested
+            tmp = []
+            for sd in subjects_done_by_student:
+                tmp_entry = {
+                    'subject': sd,
+                    'total': 0.0,
+                    'avg': 0.0,
+                }
+                for exam_object in exam_objects: # is a subject done by student and has been requested in exam types names
+                    if (exam_object.subject.name == sd.subject.name) and (exam_object.exam_type.name in exam_types_names):
+                        tmp_entry['total'] += float(exam_object.marks)
+                tmp_entry['avg'] = round(tmp_entry['total'] / tet, 2)
+                tmp.append(tmp_entry)
+
+            # sort tmp
+            tmp.sort(key=lambda sd: sd['avg'], reverse=True)
+
+            # output tmp
+            pdf.set_font('Times', '', 12); th = pdf.font_size * 1.5
+            for i,v in enumerate(tmp):
+                pdf.cell(epw*0.05, th, str(i+1), border=1)
+                pdf.cell(epw*0.40, th, v['subject'].subject.name.capitalize(), border=1)
+                pdf.cell(epw*0.25, th, str(v['avg']), border=1, align='C')
+                pdf.cell(epw*0.25, th, get_grade(v['avg']), border=1, align='C')
+                pdf.ln()
+
+            # overall grade
+            total = 0.0
+            for tmp_entry in tmp:
+                total += float(tmp_entry['avg'])
+            avg = round(total / len(subjects_done_by_student), 2)
+
+            # output overal grade
+            pdf.ln(2)
+            pdf.set_font('Times', 'B', 12); th = pdf.font_size + 1
+            pdf.cell(epw*0.25, th, 'Average: ')
+            pdf.set_font('Times', '', 12)
+            pdf.cell(epw*0.75, th, str(avg), ln=1)
+            pdf.set_font('Times', 'B', 12)
+            pdf.cell(epw*0.25, th, 'Grade: ')
+            # pdf.set_font('Times', '', 12)
+            pdf.cell(epw*0.75, th, get_grade(avg), ln=1)
+            pdf.cell(epw*0.25, th, 'Position: ') # student's position
+            pdf.set_font('Times', '', 12)
+            students_list = StudentProfile.objects.filter(form=student.get_form()) # all students in same form
+            position = '%d Out of %d' % (get_student_position(students_list, student, exam_types_names, term_name), len(students_list))
+            pdf.cell(epw*0.75, th, position, ln=1)
+            
+            # footer
+            pdf.set_font('Arial', '', 10); th = pdf.font_size
+            pdf.set_y(eph - th)
+            now = datetime.datetime.now()
+            pdf.cell(epw, th, 'Printed On: %s/%s/%s' % (now.day, now.month, now.year), align='C')
+
+            response = HttpResponse(pdf.output(dest='S').encode('latin-1'))
+            response['Content-Type'] = 'application/pdf'
+            response['Content-Disposition'] = 'inline; filename="%s.pdf"' %(full_name)
+
+            messages.success(request, 'Results slip has been generated.')
+            return response
+        return render(request, self.template_name, {'form': form})
+
+class GenerateResultsSlipPerClassView(LoginRequiredMixin, View):
+    '''
+    Renders a form to filter students and produce results slips for 
+    those students.
+    '''
+    form_class = GenerateResultsSlipPerClassFilterForm
+    template_name = 'exam_module/generate_results_slip_per_class.html'
+
+    def get(self, request):
+        form = self.form_class(request.GET or None)
+        if form.is_valid():
+            f = form.cleaned_data.get('form')
+            stream_name = form.cleaned_data.get('stream')
+            term_name = form.cleaned_data.get('term_name')
+            exam_types_names = form.cleaned_data.get('exam_types_names')
+
+            # get students
+            if stream_name == 'all':
+                query_set = StudentProfile.objects.all()
+            else:
+                query_set = StudentProfile.objects.filter(stream__name=stream_name)
+            students_list = [s for s in query_set if s.get_form() == f]
+
+            # pdf
+            pdf = FPDF()
+
+            # Effective page width, or just epw
+            epw = pdf.w - 2*pdf.l_margin
+
+            # Effective page height, or just eph
+            eph = pdf.h - 2*pdf.b_margin
+
+            for student in students_list: # generate results slip for all students found
+                pdf.add_page()
+                
+                # result slip 
+                # header
+                title = 'High School'
+                subtitle = 'Results Slip'
+                pdf.set_font('Times', 'B', 16); th = pdf.font_size
+                pdf.cell(epw, th+2, title, align='C', ln=1)
+                pdf.set_font('Times', 'B', 14); th = pdf.font_size
+                pdf.cell(epw, th+2, subtitle, align='C', ln=1, border='B')
+                pdf.ln(4)
+
+                # table
+                # title
+                pdf.set_font('Times', 'B', 12); th = pdf.font_size + 1
+                pdf.cell(epw*0.25, th, 'Registration Number: ')
+                pdf.set_font('Times', '', 12)
+                pdf.cell(epw*0.20, th, '%s' % (student.reg_no))
+                pdf.set_font('Times', 'B', 12)
+                pdf.cell(epw*0.20, th, 'Name: ')
+                pdf.set_font('Times', '', 12)
+                full_name = '%s %s %s' % (student.user.first_name, student.user.middle_name, student.user.last_name)
+                pdf.cell(epw*0.25, th, '%s' % (full_name), ln=1)
+                pdf.set_font('Times', 'B', 12)
+                pdf.cell(epw*0.25, th, 'Form: ')
+                pdf.set_font('Times', '', 12)
+                pdf.cell(epw*0.20, th, '%s %s' % (student.get_form(), student.stream.name))
+                pdf.set_font('Times', 'B', 12)
+                pdf.cell(epw*0.20, th, 'Term: ')
+                pdf.set_font('Times', '', 12)
+                pdf.cell(epw*0.25, th, '%s %s' % (term_name, datetime.datetime.now().year), ln=1)
+                pdf.ln(2)
+
+                # thead
+                pdf.set_font('Times', 'B', 12); th = pdf.font_size * 1.5
+                pdf.cell(epw*0.05, th, 'No.', align='C', border=1)
+                pdf.cell(epw*0.40, th, 'Subjects', align='C', border=1)
+                pdf.cell(epw*0.25, th, 'Average', align='C', border=1)
+                pdf.cell(epw*0.25, th, 'Grade', align='C', border=1)
+                pdf.ln()
+
+                # tbody
+                subjects_done_by_student = SubjectsDoneByStudent.objects.filter(student=student)
+                exam_objects = Exam.objects.filter(student=student, term__name=term_name)
+                tet = len(exam_types_names) # total exam types requested
+                tmp = []
+                for sd in subjects_done_by_student:
+                    tmp_entry = {
+                        'subject': sd,
+                        'total': 0.0,
+                        'avg': 0.0,
+                    }
+                    for exam_object in exam_objects: # is a subject done by student and has been requested in exam types names
+                        if (exam_object.subject.name == sd.subject.name) and (exam_object.exam_type.name in exam_types_names):
+                            tmp_entry['total'] += float(exam_object.marks)
+                    tmp_entry['avg'] = round(tmp_entry['total'] / tet, 2)
+                    tmp.append(tmp_entry)
+
+                # sort tmp
+                tmp.sort(key=lambda sd: sd['avg'], reverse=True)
+
+                # output tmp
+                pdf.set_font('Times', '', 12); th = pdf.font_size * 1.5
+                for i,v in enumerate(tmp):
+                    pdf.cell(epw*0.05, th, str(i+1), border=1)
+                    pdf.cell(epw*0.40, th, v['subject'].subject.name.capitalize(), border=1)
+                    pdf.cell(epw*0.25, th, str(v['avg']), border=1, align='C')
+                    pdf.cell(epw*0.25, th, get_grade(v['avg']), border=1, align='C')
+                    pdf.ln()
+
+                # overall grade
+                total = 0.0
+                for tmp_entry in tmp:
+                    total += float(tmp_entry['avg'])
+                avg = round(total / len(subjects_done_by_student), 2)
+
+                # output overal grade
+                pdf.ln(2)
+                pdf.set_font('Times', 'B', 12); th = pdf.font_size + 1
+                pdf.cell(epw*0.25, th, 'Average: ')
+                pdf.set_font('Times', '', 12)
+                pdf.cell(epw*0.75, th, str(avg), ln=1)
+                pdf.set_font('Times', 'B', 12)
+                pdf.cell(epw*0.25, th, 'Grade: ')
+                # pdf.set_font('Times', '', 12)
+                pdf.cell(epw*0.75, th, get_grade(avg), ln=1)
+                pdf.cell(epw*0.25, th, 'Position: ') # student's position
+                pdf.set_font('Times', '', 12)
+                students_list = StudentProfile.objects.filter(form=student.get_form()) # all students in same form
+                position = '%d Out of %d' % (get_student_position(students_list, student, exam_types_names, term_name), len(students_list))
+                pdf.cell(epw*0.75, th, position, ln=1)
+                
+                # footer
+                pdf.set_font('Arial', '', 10); th = pdf.font_size
+                pdf.set_y(eph - th)
+                now = datetime.datetime.now()
+                pdf.cell(epw, th, 'Printed On: %s/%s/%s' % (now.day, now.month, now.year), align='C')
+
+            response = HttpResponse(pdf.output(dest='S').encode('latin-1'))
+            response['Content-Type'] = 'application/pdf'
+            filename = 'Form {form} {stream_name} Results Slips'.format(form=f, stream_name=stream_name)
+            response['Content-Disposition'] = 'inline; filename="%s.pdf"' %(filename)
+
+            messages.success(request, 'Results slip has been generated.')
+            return response
+
+        return render(request, self.template_name, {'form': form})

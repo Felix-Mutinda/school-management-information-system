@@ -20,7 +20,8 @@ from accounts.models import (
 from .models import (
     Subject,
     ExamType,
-    Term
+    Term,
+    SubjectsDoneByStudent,
 )
 
 # choices
@@ -209,8 +210,16 @@ class CreateManyExamsFilterForm(forms.Form):
                             form,
                             stream,
                             year_offset,
+                    ))
+                    
+                # if no students taking that subject also raise a validation error
+                subject_name = self.cleaned_data.get('subject_name', '')
+                if subject_name:
+                    students_list = [s for s in students_list if subject_name in [sd.subject.name for sd in SubjectsDoneByStudent.objects.filter(student=s)]]
+                    if not students_list:
+                        raise forms.ValidationError(
+                            'No students in form %d %s taking %s.' % (form, stream, subject_name)
                         )
-                    )
 
 class ExamReportsFilterForm(forms.Form):
     '''
@@ -275,4 +284,99 @@ class ExamReportsFilterForm(forms.Form):
                         form,
                         stream,
                     )
+                )
+
+class GenerateResultsSlipPerStudentFilterForm(forms.Form):
+    '''
+    Specify the reg_no of the student.
+    '''
+    reg_no = forms.CharField(label='Registration Number')
+    exam_types_names = forms.MultipleChoiceField(label='Exam Types', widget=forms.CheckboxSelectMultiple, choices=EXAM_TYPES)
+    term_name = forms.ChoiceField(label='Term', widget=forms.Select, choices=TERMS)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_action = 'exam_module:generate_results_slip_per_student'
+        self.helper.form_method = 'get'
+        self.helper.form_id = 'generate-results-slip-per-student-filter-form'
+        self.helper.layout = Layout(
+            Fieldset(
+                'Filter Tags',
+                HTML(
+                    '''
+                    {% include '_messages.html' %}
+                    '''
+                ),
+                Field('reg_no'),
+                Div(
+                    Field('term_name', wrapper_class='col'),
+                    Field('exam_types_names', wrapper_class='col'),
+                    css_class='form-row',
+                ),
+                Submit('submit', 'Generate', css_class='btn btn-primary'),
+                css_class='p-3 border rounded',
+            )
+        )
+
+    def clean_reg_no(self):
+        reg_no = self.cleaned_data.get('reg_no')
+        try:
+            StudentProfile.objects.get(reg_no=reg_no)
+        except StudentProfile.DoesNotExist:
+            raise forms.ValidationError('No student with this registration number is found.')
+        return reg_no
+
+class GenerateResultsSlipPerClassFilterForm(forms.Form):
+    '''
+    A form to specify filter tags to print results slip 
+    for several student.
+    '''
+    form = forms.IntegerField()
+    stream = forms.ChoiceField(widget=forms.Select, choices=[('all', 'All')]+STREAMS)
+    exam_types_names = forms.MultipleChoiceField(label='Exam Types', widget=forms.CheckboxSelectMultiple, choices=EXAM_TYPES)
+    term_name = forms.ChoiceField(label='Term', widget=forms.Select, choices=TERMS)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_action = 'exam_module:generate_results_slip_per_class'
+        self.helper.form_method = 'get'
+        self.helper.form_id = 'generate-results-slip-per-class-filter-form'
+        self.helper.layout = Layout(
+            Fieldset(
+                'Filter Tags',
+                HTML(
+                    '''
+                    {% include '_messages.html' %}
+                    '''
+                ),
+                Div(
+                    Field('form', wrapper_class='col'),
+                    Field('stream', wrapper_class='col'),
+                    css_class='form-row',
+                ),
+                Div(
+                    Field('term_name', wrapper_class='col'),
+                    Field('exam_types_names', wrapper_class='col'),
+                    css_class='form-row',
+                ),
+                Submit('submit', 'Generate', css_class='btn btn-primary'),
+                css_class='p-3 border rounded',
+            )
+        )
+    
+    def clean(self, *args, **kwargs):
+        super().clean(*args, **kwargs)
+        form = self.cleaned_data.get('form', '')
+        stream_name = self.cleaned_data.get('stream', '')
+        if form and stream_name:
+            if stream_name == 'all':
+                query_set = StudentProfile.objects.all()
+            else:
+                query_set = StudentProfile.objects.filter(stream__name=stream_name)
+            students_list = [s for s in query_set if s.get_form() == form]
+            if not students_list:
+                raise forms.ValidationError(
+                    'No students found in form %s %s.' % (form, stream_name)
                 )

@@ -302,7 +302,7 @@ class HomeViewTests(WebTest):
 
 class CreateManyExamsFilterFormTests(TestCase):
 
-    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types', 'streams']
+    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types', 'streams', 'subjects_done_by_student']
 
     def test_form_with_no_data(self):
         '''
@@ -350,7 +350,7 @@ class CreateManyExamsFilterFormTests(TestCase):
         form = CreateManyExamsFilterForm({
             'form': 2,
             'stream': 'west',
-            'subject_name': 'Mathematics',
+            'subject_name': 'Kiswahili',
             'exam_type_name': 'End Term',
             'term_name': '3',
             'date_done': timezone.now(),
@@ -359,7 +359,7 @@ class CreateManyExamsFilterFormTests(TestCase):
 
 class CreateManyExamsFilterViewTests(WebTest):
 
-    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types', 'streams']
+    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types', 'streams', 'subjects_done_by_student']
 
     def setUp(self):
         self.create_many_exams_filter_url = reverse('exam_module:create_many_exams_filter')
@@ -428,7 +428,7 @@ class CreateManyExamsFilterViewTests(WebTest):
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 4
         filter_form['stream'] = 'north'
-        filter_form['subject_name'] = 'Python'
+        filter_form['subject_name'] = 'Kiswahili'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'
         filter_form['date_done'] = datetime.datetime.now()
@@ -448,7 +448,7 @@ class CreateManyExamsFilterViewTests(WebTest):
 
 class CreateManyExamsViewTests(WebTest):
 
-    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types', 'streams']
+    fixtures = ['users','student_profiles', 'subjects', 'terms', 'exam_types', 'streams', 'subjects_done_by_student']
 
     def setUp(self):
         self.create_many_exams_filter_url = reverse('exam_module:create_many_exams_filter')
@@ -482,7 +482,7 @@ class CreateManyExamsViewTests(WebTest):
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 8
         filter_form['stream'] = 'north'
-        filter_form['subject_name'] = 'Python'
+        filter_form['subject_name'] = 'Kiswahili'
         filter_form['exam_type_name'] = 'Opener'
         filter_form['term_name'] = '2'
         filter_form['date_done'] = datetime.datetime.now()
@@ -498,7 +498,7 @@ class CreateManyExamsViewTests(WebTest):
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 4
         filter_form['stream'] = 'north'
-        filter_form['subject_name'] = 'Python'
+        filter_form['subject_name'] = 'Kiswahili'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'
         filter_form['date_done'] = datetime.datetime.now()
@@ -519,7 +519,7 @@ class CreateManyExamsViewTests(WebTest):
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 4
         filter_form['stream'] = 'north'
-        filter_form['subject_name'] = 'Python'
+        filter_form['subject_name'] = 'Kiswahili'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'
         filter_form['date_done'] = datetime.datetime.now()
@@ -536,7 +536,7 @@ class CreateManyExamsViewTests(WebTest):
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 4
         filter_form['stream'] = 'north'
-        filter_form['subject_name'] = 'Python'
+        filter_form['subject_name'] = 'Kiswahili'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'
         filter_form['date_done'] = datetime.datetime.now()
@@ -570,7 +570,7 @@ class CreateManyExamsViewTests(WebTest):
         filter_form = page.forms['filter-exams-form']
         filter_form['form'] = 4
         filter_form['stream'] = 'north'
-        filter_form['subject_name'] = 'Python'
+        filter_form['subject_name'] = 'Kiswahili'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'
         filter_form['date_done'] = datetime.datetime.now()

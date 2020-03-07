@@ -1,0 +1,11 @@
+{% extends 'dashboard.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block dashboard_content %}
+    <div class="row">
+        <div class="col-md-6 mt-2">
+            {% crispy form %}
+        </div>
+    </div>
+{% endblock dashboard_content %}
