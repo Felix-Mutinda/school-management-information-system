@@ -501,7 +501,7 @@ class GenerateResultsSlipPerStudentView(LoginRequiredMixin, View):
         form = self.form_class(request.GET or None)
         if form.is_valid():
             reg_no = form.cleaned_data.get('reg_no')
-            exam_types_names = form.cleaned_data.get('exam_types_names')
+            exam_types = form.cleaned_data.get('exam_types_names')
             term_name = form.cleaned_data.get('term_name')
 
             student = StudentProfile.objects.get(reg_no=reg_no)
@@ -558,7 +558,7 @@ class GenerateResultsSlipPerStudentView(LoginRequiredMixin, View):
             # tbody
             subjects_done_by_student = SubjectsDoneByStudent.objects.filter(student=student)
             exam_objects = Exam.objects.filter(student=student, term__name=term_name)
-            tet = len(exam_types_names) # total exam types requested
+            tet = exam_types.count() # total exam types requested
             tmp = []
             for sd in subjects_done_by_student:
                 tmp_entry = {
@@ -567,7 +567,7 @@ class GenerateResultsSlipPerStudentView(LoginRequiredMixin, View):
                     'avg': 0.0,
                 }
                 for exam_object in exam_objects: # is a subject done by student and has been requested in exam types names
-                    if (exam_object.subject.name == sd.subject.name) and (exam_object.exam_type.name in exam_types_names):
+                    if (exam_object.subject.name == sd.subject.name) and (exam_object.exam_type in exam_types):
                         tmp_entry['total'] += float(exam_object.marks)
                 tmp_entry['avg'] = round(tmp_entry['total'] / tet, 2)
                 tmp.append(tmp_entry)
@@ -603,7 +603,7 @@ class GenerateResultsSlipPerStudentView(LoginRequiredMixin, View):
             pdf.cell(epw*0.25, th, 'Position: ') # student's position
             pdf.set_font('Times', '', 12)
             students_list = StudentProfile.objects.filter(form=student.get_form()) # all students in same form
-            position = '%d Out of %d' % (get_student_position(students_list, student, exam_types_names, term_name), len(students_list))
+            position = '%d Out of %d' % (get_student_position(students_list, student, exam_types, term_name), len(students_list))
             pdf.cell(epw*0.75, th, position, ln=1)
             
             # footer
@@ -632,15 +632,15 @@ class GenerateResultsSlipPerClassView(LoginRequiredMixin, View):
         form = self.form_class(request.GET or None)
         if form.is_valid():
             f = form.cleaned_data.get('form')
-            stream_name = form.cleaned_data.get('stream')
-            term_name = form.cleaned_data.get('term_name')
-            exam_types_names = form.cleaned_data.get('exam_types_names')
+            stream = form.cleaned_data.get('stream')
+            term = form.cleaned_data.get('term_name')
+            exam_types = form.cleaned_data.get('exam_types_names')
 
             # get students
-            if stream_name == 'all':
+            if stream.name == 'All':
                 query_set = StudentProfile.objects.all()
             else:
-                query_set = StudentProfile.objects.filter(stream__name=stream_name)
+                query_set = StudentProfile.objects.filter(stream=stream)
             students_list = [s for s in query_set if s.get_form() == f]
 
             # pdf
@@ -683,7 +683,7 @@ class GenerateResultsSlipPerClassView(LoginRequiredMixin, View):
                 pdf.set_font('Times', 'B', 12)
                 pdf.cell(epw*0.20, th, 'Term: ')
                 pdf.set_font('Times', '', 12)
-                pdf.cell(epw*0.25, th, '%s %s' % (term_name, datetime.datetime.now().year), ln=1)
+                pdf.cell(epw*0.25, th, '%s %s' % (term.name, datetime.datetime.now().year), ln=1)
                 pdf.ln(2)
 
                 # thead
@@ -696,8 +696,8 @@ class GenerateResultsSlipPerClassView(LoginRequiredMixin, View):
 
                 # tbody
                 subjects_done_by_student = SubjectsDoneByStudent.objects.filter(student=student)
-                exam_objects = Exam.objects.filter(student=student, term__name=term_name)
-                tet = len(exam_types_names) # total exam types requested
+                exam_objects = Exam.objects.filter(student=student, term=term)
+                tet = exam_types.count() # total exam types requested
                 tmp = []
                 for sd in subjects_done_by_student:
                     tmp_entry = {
@@ -706,7 +706,7 @@ class GenerateResultsSlipPerClassView(LoginRequiredMixin, View):
                         'avg': 0.0,
                     }
                     for exam_object in exam_objects: # is a subject done by student and has been requested in exam types names
-                        if (exam_object.subject.name == sd.subject.name) and (exam_object.exam_type.name in exam_types_names):
+                        if (exam_object.subject.name == sd.subject.name) and (exam_object.exam_type in exam_types):
                             tmp_entry['total'] += float(exam_object.marks)
                     tmp_entry['avg'] = round(tmp_entry['total'] / tet, 2)
                     tmp.append(tmp_entry)
@@ -742,7 +742,7 @@ class GenerateResultsSlipPerClassView(LoginRequiredMixin, View):
                 pdf.cell(epw*0.25, th, 'Position: ') # student's position
                 pdf.set_font('Times', '', 12)
                 students_list = StudentProfile.objects.filter(form=student.get_form()) # all students in same form
-                position = '%d Out of %d' % (get_student_position(students_list, student, exam_types_names, term_name), len(students_list))
+                position = '%d Out of %d' % (get_student_position(students_list, student, exam_types, term), len(students_list))
                 pdf.cell(epw*0.75, th, position, ln=1)
                 
                 # footer
@@ -753,7 +753,7 @@ class GenerateResultsSlipPerClassView(LoginRequiredMixin, View):
 
             response = HttpResponse(pdf.output(dest='S').encode('latin-1'))
             response['Content-Type'] = 'application/pdf'
-            filename = 'Form {form} {stream_name} Results Slips'.format(form=f, stream_name=stream_name)
+            filename = 'Form {form} {stream_name} Results Slips'.format(form=f, stream_name=stream.name)
             response['Content-Disposition'] = 'inline; filename="%s.pdf"' %(filename)
 
             messages.success(request, 'Results slip has been generated.')

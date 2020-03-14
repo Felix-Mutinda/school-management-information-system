@@ -12,9 +12,9 @@ def get_grade(marks):
             return item.grade
     return '**'
 
-def get_student_position(students_list, std, exam_types_names, term_name):
+def get_student_position(students_list, std, exam_types, term):
     '''
-    Based on the given term_name and exam_types_names, determine an average 
+    Based on the given term and exam_types, determine an average 
     score for all the students in students_list. Returns the position of
     the given student(std) based on average scores in desceding order.
     '''
@@ -22,7 +22,7 @@ def get_student_position(students_list, std, exam_types_names, term_name):
     for student in students_list:
         exam_objects = Exam.objects.filter(
             student = student,
-            term__name = term_name,
+            term = term,
         )
         # just an extra precaution.
         # get the exam objects if their subjects belong to the
@@ -35,10 +35,10 @@ def get_student_position(students_list, std, exam_types_names, term_name):
             'avg': 0.0,
         }
         for exam_object in exam_objects:
-            if exam_object.exam_type.name in exam_types_names:
+            if exam_object.exam_type in exam_types:
                 tmp_entry['total'] += float(exam_object.marks)
 
-        tet = len(exam_types_names) # total exam types names
+        tet = exam_types.count() # total exam types names
         no_of_subjects_done_by_student = SubjectsDoneByStudent.objects.filter(student=student).count()
         avg = round(tmp_entry['total'] / (tet * no_of_subjects_done_by_student), 2) # compute avegare
         tmp_entry['avg'] = avg
