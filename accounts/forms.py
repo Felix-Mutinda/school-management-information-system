@@ -15,12 +15,9 @@ from .models import (
 )
 
 from exam_module.models import Subject
+from exam_module.utils import get_objects_as_choices
 
 User = get_user_model()
-
-# choices
-STREAMS = [(stream.name, stream.name.capitalize()) for stream in Stream.objects.all()]
-SUBJECTS = [(subject.name, subject.name.capitalize()) for subject in Subject.objects.all()]
 
 class StaffLoginForm(forms.Form):
 
@@ -211,12 +208,12 @@ class RegisterStudentForm(forms.Form):
     student_middle_name = forms.CharField(label='Middle Name', required=False)
     student_last_name = forms.CharField(label='Sir Name')
     student_form = forms.IntegerField(label='Form/ Class', min_value=1)
-    student_stream_name = forms.ChoiceField(label='Stream', widget=forms.Select, choices=STREAMS)
+    student_stream_name = forms.ModelChoiceField(label='Stream', widget=forms.Select, queryset=Stream.objects, empty_label=None, to_field_name='name')
     student_house = forms.CharField(label='Domitory/ House', required=False)
     student_kcpe_marks = forms.IntegerField(label='KCPE Marks', min_value=0, required=False)
     student_date_registered = forms.DateTimeField(label='Date Registered', initial=datetime.datetime.now())
     # the subjects done by the student
-    student_subjects_done_by_student = forms.MultipleChoiceField(label='Select Subjects', widget=forms.CheckboxSelectMultiple, choices=SUBJECTS)
+    student_subjects_done_by_student = forms.ModelMultipleChoiceField(label='Select Subjects', widget=forms.CheckboxSelectMultiple, queryset=Subject.objects, to_field_name='name')
 
     guardian_first_name = forms.CharField(label='First Name', required=False)
     guardian_middle_name = forms.CharField(label='Middle Name', required=False)
@@ -238,10 +235,9 @@ class GenerateClassListForm(forms.Form):
     Validate the form and stream used to generate a class
     list.
     '''
-    STREAM_CHOICES = [(stream.name, stream.name.capitalize()) for stream in Stream.objects.all()]
-    
+
     form = forms.IntegerField(label='Form/ Class')
-    stream_name = forms.ChoiceField(label='Stream', widget=forms.Select, choices=STREAM_CHOICES)
+    stream_name = forms.ModelChoiceField(label='Stream', widget=forms.Select, queryset=Stream.objects, empty_label=None, to_field_name='name')
     file_type = forms.ChoiceField(label='Choose File Type', widget=forms.RadioSelect, choices=(('0', 'PDF'), ('1', 'EXCEL')))
 
     def clean_stream_name(self):

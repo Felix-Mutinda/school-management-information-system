@@ -26,5 +26,13 @@
         "fields": {
             "name": "west"
         }
+    },
+    {
+        "model": "accounts.Stream",
+        "pk": 5,
+        "fields": {
+            "name": "all"
+        }
     }
+
 ]

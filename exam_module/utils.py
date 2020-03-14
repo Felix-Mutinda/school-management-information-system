@@ -54,3 +54,11 @@ def get_student_position(students_list, std, exam_types_names, term_name):
             return p
         p += 1
     return '**'
+
+def get_objects_as_choices(model):
+    '''
+    Returns a list of tuples (model.object.name, model.object.name.capitalize())
+    for use in widget choices.
+    '''
+    CHOICES = [(obj.name, obj.name.capitalize()) for obj in model.objects.all()]
+    return CHOICES

@@ -41,8 +41,54 @@
         <p class=" mt-3 mb-4 p-3">
           Use this link to Add / Change the exam types offered.
         </p>
-        <a href="#" role="button" class="btn btn-lg btn-block btn-outline-primary">Add</a>
+        <a href="{% url 'settings_module:add_exam_type' %}" role="button" class="btn btn-lg btn-block btn-outline-primary">Add</a>
       </div>
     </div>
+</div>
+
+<!-- Deck two-->
+<div class="card-deck mt-3 mb-3 text-center">
+  <!-- Card 1 -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header">
+      <h4 class="my-0 font-weight-normal">Terms</h4>
+    </div>
+    <div class="card-body">
+      <h2 class="card-title pricing-card-title">Add</h2>
+      <p class=" mt-3 mb-4 p-3">
+        Use this link to Add/Update the terms in an academic year.
+      </p>
+      <a href="{% url 'settings_module:add_term' %}" role="button" class="btn btn-lg btn-block btn-outline-primary">Add</a>
+    </div>
+  </div>
+  
+  <!-- Card 2 -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header">
+      <h4 class="my-0 font-weight-normal">Streams</h4>
+    </div>
+    <div class="card-body">
+      <h2 class="card-title pricing-card-title">Add</h2>
+      <p class=" mt-3 mb-4 p-3">
+        Use this link to Add/Update the streams in this school.
+      </p>
+      <a href="{% url 'settings_module:add_stream' %}" role="button" class="btn btn-lg btn-block btn-outline-primary">Add</a>
+    </div>
+  </div>
+  
+  <!-- Card 3 hidden, for nice layout -->
+  <div class="card mb-4 shadow-sm" style="visibility: hidden;">
+    <div class="card-header">
+      <h4 class="my-0 font-weight-normal">Streams</h4>
+    </div>
+    <div class="card-body">
+      <h2 class="card-title pricing-card-title">Add</h2>
+      <p class=" mt-3 mb-4 p-3">
+        Use this link to Add/Update the streams in this school.
+      </p>
+      <a href="{% url 'settings_module:add_stream' %}" role="button" class="btn btn-lg btn-block btn-outline-primary">Add</a>
+    </div>
+  </div>
+
 </div>
 {% endblock dashboard_content %}

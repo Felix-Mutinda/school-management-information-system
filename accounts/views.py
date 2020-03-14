@@ -247,7 +247,7 @@ class GenerateClassListView(LoginRequiredMixin, View):
                 epw = pdf.w - 2*pdf.l_margin
 
                 # table title
-                title = 'Form %d %s' % (f, stream_name.capitalize())
+                title = 'Form %d %s' % (f, stream_name)
                 pdf.set_font('Times', 'B', 16)
                 pdf.cell(epw, 0.0, title, align='C')
                 pdf.ln(4)
@@ -280,13 +280,13 @@ class GenerateClassListView(LoginRequiredMixin, View):
 
                 response = HttpResponse(pdf.output(dest='S').encode('latin-1'))
                 response['Content-Type'] = 'application/pdf'
-                response['Content-Disposition'] = 'inline; filename="Form %s %s.pdf"' %(f,stream_name.capitalize())
+                response['Content-Disposition'] = 'inline; filename="Form %s %s.pdf"' %(f,stream_name)
 
                 messages.success(request, 'File has been generated.')
                 return response
             else:
                 response = HttpResponse(content_type='text/csv')
-                response['Content-Disposition'] = 'attachment; filename="Form %s %s.csv"' %(f,stream_name.capitalize())
+                response['Content-Disposition'] = 'attachment; filename="Form %s %s.csv"' %(f,stream_name)
 
                 i = 1
                 writer = csv.writer(response)

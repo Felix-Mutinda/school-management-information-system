@@ -9,6 +9,9 @@ class Subject(models.Model):
     '''
     name = models.CharField(max_length=20, null=False, blank=False, unique=True)
 
+    def __str__(self):
+        return self.name
+
 class ExamType(models.Model):
     '''
     Represents all the exam types/categories offered.
@@ -16,12 +19,18 @@ class ExamType(models.Model):
     '''
     name = models.CharField(max_length=20, null=False, blank=False, unique=True)
 
+    def __str__(self):
+        return self.name
+
 class Term(models.Model):
     '''
     Represents all the  terms/semesters in a year.
     e.g 1,2,3 or 1.1,1.2,1.3,... or a,b,c,...
     '''
     name = models.CharField(max_length=20, null=False, blank=False, unique=True)
+
+    def __str__(self):
+        return self.name
 
 class Exam(models.Model):
     '''

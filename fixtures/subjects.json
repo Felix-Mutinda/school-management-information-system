@@ -33,5 +33,13 @@
         "fields": {
             "name": "Python"
         }
+    },
+    {
+        "model": "exam_module.Subject",
+        "pk": 6,
+        "fields": {
+            "name": "All"
+        }
     }
+
 ]

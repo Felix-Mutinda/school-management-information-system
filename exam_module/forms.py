@@ -24,11 +24,7 @@ from .models import (
     SubjectsDoneByStudent,
 )
 
-# choices
-STREAMS = [(stream.name, stream.name.capitalize()) for stream in Stream.objects.all()]
-SUBJECTS = [(subject.name, subject.name.capitalize()) for subject in Subject.objects.all()]
-EXAM_TYPES = [(exam_type.name, exam_type.name.capitalize()) for exam_type in ExamType.objects.all()]
-TERMS = [(term.name, term.name.capitalize()) for term in Term.objects.all()]
+from .utils import get_objects_as_choices
 
 class CreateExamForm(forms.Form):
     '''
@@ -36,9 +32,9 @@ class CreateExamForm(forms.Form):
     and Correct data type.
     '''
     student_reg_no = forms.CharField(label="Student Registration Number", max_length=20)
-    subject_name = forms.ChoiceField(label="Subject", widget=forms.Select, choices=SUBJECTS)
-    exam_type_name = forms.ChoiceField(label="Exam Type", widget=forms.Select, choices=EXAM_TYPES)
-    term_name = forms.ChoiceField(label="Term", widget=forms.Select, choices=TERMS)
+    subject_name = forms.ModelChoiceField(label="Subject", widget=forms.Select, queryset=Subject.objects, empty_label=None, to_field_name='name')
+    exam_type_name = forms.ModelChoiceField(label="Exam Type", widget=forms.Select, queryset=ExamType.objects,  empty_label=None, to_field_name='name')
+    term_name = forms.ModelChoiceField(label="Term", widget=forms.Select, queryset=Term.objects, empty_label=None, to_field_name='name')
     date_done = forms.DateTimeField(widget=forms.DateTimeInput)
     marks = forms.DecimalField(max_digits=4, decimal_places=2)
 
@@ -114,10 +110,10 @@ class CreateManyExamsFilterForm(forms.Form):
     batch exam entry.
     '''
     form = forms.IntegerField()
-    stream = forms.ChoiceField(widget=forms.Select, choices=STREAMS)
-    subject_name = forms.ChoiceField(label='Subject', widget=forms.Select, choices=SUBJECTS)
-    exam_type_name = forms.ChoiceField(label='Exam Type', widget=forms.Select, choices=EXAM_TYPES)
-    term_name = forms.ChoiceField(label='Term', widget=forms.Select, choices=TERMS)
+    stream = forms.ModelChoiceField(widget=forms.Select, queryset=Stream.objects, empty_label=None, to_field_name='name')
+    subject_name = forms.ModelChoiceField(label='Subject', widget=forms.Select, queryset=Subject.objects, empty_label=None, to_field_name='name')
+    exam_type_name = forms.ModelChoiceField(label='Exam Type', widget=forms.Select, queryset=ExamType.objects, empty_label=None, to_field_name='name')
+    term_name = forms.ModelChoiceField(label='Term', widget=forms.Select, queryset=Term.objects, empty_label=None, to_field_name='name')
     date_done = forms.DateTimeField(label='Date Done', widget=forms.DateTimeInput)
 
     def __init__(self, *args, **kwargs):
@@ -215,7 +211,7 @@ class CreateManyExamsFilterForm(forms.Form):
                 # if no students taking that subject also raise a validation error
                 subject_name = self.cleaned_data.get('subject_name', '')
                 if subject_name:
-                    students_list = [s for s in students_list if subject_name in [sd.subject.name for sd in SubjectsDoneByStudent.objects.filter(student=s)]]
+                    students_list = [s for s in students_list if subject_name in [sd.subject for sd in SubjectsDoneByStudent.objects.filter(student=s)]]
                     if not students_list:
                         raise forms.ValidationError(
                             'No students in form %d %s taking %s.' % (form, stream, subject_name)
@@ -227,10 +223,10 @@ class ExamReportsFilterForm(forms.Form):
     used to compute the student final grade.
     '''
     form = forms.IntegerField()
-    stream = forms.ChoiceField(widget=forms.Select, choices=[('all', 'All')] + STREAMS)
-    subject = forms.ChoiceField(widget=forms.Select, choices=[('all', 'All')] + SUBJECTS)
-    exam_types = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple, choices=EXAM_TYPES)
-    term = forms.ChoiceField(widget=forms.Select, choices=TERMS)
+    stream = forms.ModelChoiceField(widget=forms.Select, queryset=Stream.objects, empty_label=None, to_field_name='name')
+    subject = forms.ModelChoiceField(widget=forms.Select, queryset=Subject.objects, empty_label=None, to_field_name='name')
+    exam_types = forms.ModelMultipleChoiceField(widget=forms.CheckboxSelectMultiple, queryset=ExamType.objects, to_field_name='name')
+    term = forms.ModelChoiceField(widget=forms.Select, queryset=Term.objects, empty_label=None, to_field_name='name')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -273,7 +269,7 @@ class ExamReportsFilterForm(forms.Form):
         if 'form' in self.cleaned_data and 'stream' in self.cleaned_data:
             form = self.cleaned_data.get('form')
             stream = self.cleaned_data.get('stream')
-            if stream == 'all':
+            if stream.name == 'All':
                 query_set = StudentProfile.objects.all()
             else:
                 query_set = StudentProfile.objects.filter(stream__name=stream)
@@ -285,14 +281,23 @@ class ExamReportsFilterForm(forms.Form):
                         stream,
                     )
                 )
+            
+            # if no students taking that subject also raise a validation error
+            subject = self.cleaned_data.get('subject', '')
+            if subject and subject.name != 'All':
+                students_list = [s for s in students_list if subject in [sd.subject for sd in SubjectsDoneByStudent.objects.filter(student=s)]]
+                if not students_list:
+                    raise forms.ValidationError(
+                        'No students in form %d %s taking %s.' % (form, stream, subject.name)
+                    )
 
 class GenerateResultsSlipPerStudentFilterForm(forms.Form):
     '''
     Specify the reg_no of the student.
     '''
     reg_no = forms.CharField(label='Registration Number')
-    exam_types_names = forms.MultipleChoiceField(label='Exam Types', widget=forms.CheckboxSelectMultiple, choices=EXAM_TYPES)
-    term_name = forms.ChoiceField(label='Term', widget=forms.Select, choices=TERMS)
+    exam_types_names = forms.ModelMultipleChoiceField(label='Exam Types', widget=forms.CheckboxSelectMultiple, queryset=ExamType.objects, to_field_name='name')
+    term_name = forms.ModelChoiceField(label='Term', widget=forms.Select, queryset=Term.objects, empty_label=None, to_field_name='name')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -333,9 +338,9 @@ class GenerateResultsSlipPerClassFilterForm(forms.Form):
     for several student.
     '''
     form = forms.IntegerField()
-    stream = forms.ChoiceField(widget=forms.Select, choices=[('all', 'All')]+STREAMS)
-    exam_types_names = forms.MultipleChoiceField(label='Exam Types', widget=forms.CheckboxSelectMultiple, choices=EXAM_TYPES)
-    term_name = forms.ChoiceField(label='Term', widget=forms.Select, choices=TERMS)
+    stream = forms.ModelChoiceField(widget=forms.Select, queryset=Stream.objects, empty_label=None, to_field_name='name')
+    exam_types_names = forms.ModelMultipleChoiceField(label='Exam Types', widget=forms.CheckboxSelectMultiple, queryset=ExamType.objects, to_field_name='name')
+    term_name = forms.ModelChoiceField(label='Term', widget=forms.Select, queryset=Term.objects, empty_label=None, to_field_name='name')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -371,7 +376,7 @@ class GenerateResultsSlipPerClassFilterForm(forms.Form):
         form = self.cleaned_data.get('form', '')
         stream_name = self.cleaned_data.get('stream', '')
         if form and stream_name:
-            if stream_name == 'all':
+            if stream_name.name == 'All':
                 query_set = StudentProfile.objects.all()
             else:
                 query_set = StudentProfile.objects.filter(stream__name=stream_name)
