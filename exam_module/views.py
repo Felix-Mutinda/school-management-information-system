@@ -122,7 +122,7 @@ class CreateManyExamsFilterView(LoginRequiredMixin, View):
             f.fields['subject_name'] = forms.CharField(widget=forms.HiddenInput(attrs={'value': subject_name}))
             f.fields['exam_type_name'] = forms.CharField(widget=forms.HiddenInput(attrs={'value': exam_type_name}))
             f.fields['term_name'] = forms.CharField(widget=forms.HiddenInput(attrs={'value': term_name}))
-            f.fields['date_done'] = forms.CharField(widget=forms.HiddenInput(attrs={'value': str(date_done)[:-6]}))
+            f.fields['date_done'] = forms.CharField(widget=forms.HiddenInput(attrs={'value': date_done}))
 
             # instantiate crispy_forms helper
             f.helper = FormHelper()

@@ -47,7 +47,7 @@ class Exam(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     exam_type = models.ForeignKey(ExamType, on_delete=models.CASCADE)
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
-    date_done = models.DateTimeField()
+    date_done = models.DateField()
     marks = models.DecimalField(max_digits=4, decimal_places=2)
 
 class GradingSystem(models.Model):

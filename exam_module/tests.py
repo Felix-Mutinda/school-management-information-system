@@ -45,12 +45,12 @@ class ExamModelTests(TestCase):
             form='2',
             stream=Stream.objects.create(name='south'),
             house='house',
-            date_registered=timezone.now()
+            date_registered=datetime.date.today()
         )
         subject = Subject.objects.create(name='Mathematics')
         exam_type = ExamType.objects.create(name='Mid-term')
         term = Term.objects.create(name='1')
-        date_done = timezone.now()
+        date_done = datetime.date.today()
         marks = 50.0
         exam = Exam.objects.create(
             student=student_profile,
@@ -81,12 +81,12 @@ class ExamModelTests(TestCase):
             form='2',
             stream=Stream.objects.create(name='south'),
             house='house',
-            date_registered=timezone.now(),
+            date_registered=datetime.date.today(),
         )
         subject = Subject.objects.create(name='Mathematics')
         exam_type = ExamType.objects.create(name='Mid-term')
         term = Term.objects.create(name='1')
-        date_done = timezone.now()
+        date_done = datetime.date.today()
         marks = 50.0
         exam = Exam.objects.create(
             student=student_profile,
@@ -195,7 +195,7 @@ class CreateExamFormTests(TestCase):
             'subject_name': 'Mathematics',
             'exam_type_name': 'Mid Term',
             'term_name': '3',
-            'date_done': timezone.now(),
+            'date_done': datetime.date.today(),
             'marks': 50.0,
         })
         self.assertTrue(exam_form.is_valid())
@@ -243,7 +243,7 @@ class CreateOneExamViewTests(WebTest):
         page.form['subject_name'] = 'Biology'
         page.form['exam_type_name'] = 'CAT 2'
         page.form['term_name'] = '3'
-        page.form['date_done'] =  datetime.datetime.now()
+        page.form['date_done'] =  datetime.date.today()
         page.form['marks'] = 50.0
         page = page.form.submit().follow()
         self.assertContains(page, 'Data has been saved successfully.')
@@ -252,7 +252,7 @@ class CreateOneExamViewTests(WebTest):
         '''
         Adding an exam object twice should ovewrite the existing one.
         '''
-        date_done = datetime.datetime.now()
+        date_done = datetime.date.today()
         # first instance
         page = self.app.get(self.create_one_exam_url, user='staff')
         page.form['student_reg_no'] = '2'
@@ -330,7 +330,7 @@ class CreateManyExamsFilterFormTests(TestCase):
             'subject_name': 'Python',
             'exam_type_name': 'End Term',
             'term_name': '1',
-            'date_done': datetime.datetime.now(),
+            'date_done': datetime.date.today(),
         })
         self.assertFalse(form.is_valid())
         self.assertEqual(
@@ -353,7 +353,7 @@ class CreateManyExamsFilterFormTests(TestCase):
             'subject_name': 'Kiswahili',
             'exam_type_name': 'End Term',
             'term_name': '3',
-            'date_done': timezone.now(),
+            'date_done': datetime.date.today(),
         })
         self.assertTrue(form.is_valid())
 
@@ -409,14 +409,14 @@ class CreateManyExamsFilterViewTests(WebTest):
         filter_form['subject_name'] = 'Mathematics'
         filter_form['exam_type_name'] = 'Mid Term'
         filter_form['term_name'] = '3'
-        filter_form['date_done'] = datetime.datetime.now()
+        filter_form['date_done'] = datetime.date.today()
         page = filter_form.submit()
         self.assertContains(
             page,
             'There are no students found in form %s %s in the year %s.' %(
                 6,
                 'north',
-                datetime.datetime.now().year,
+                datetime.date.today().year,
             )
         )
     
@@ -431,14 +431,14 @@ class CreateManyExamsFilterViewTests(WebTest):
         filter_form['subject_name'] = 'Kiswahili'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'
-        filter_form['date_done'] = datetime.datetime.now()
+        filter_form['date_done'] = datetime.date.today()
         page = filter_form.submit()
         self.assertNotContains(
             page,
             'There are no students found in form %s %s in the year %s.' %(
                 4,
                 'north',
-                datetime.datetime.now().year,
+                datetime.date.today().year,
             )
         )
         self.assertNotContains(page, 'This subject is not found.')
@@ -485,7 +485,7 @@ class CreateManyExamsViewTests(WebTest):
         filter_form['subject_name'] = 'Kiswahili'
         filter_form['exam_type_name'] = 'Opener'
         filter_form['term_name'] = '2'
-        filter_form['date_done'] = datetime.datetime.now()
+        filter_form['date_done'] = datetime.date.today()
         page = filter_form.submit()
         self.assertEqual(page.context['students_exams_entry_form'], None)
     
@@ -501,7 +501,7 @@ class CreateManyExamsViewTests(WebTest):
         filter_form['subject_name'] = 'Kiswahili'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'
-        filter_form['date_done'] = datetime.datetime.now()
+        filter_form['date_done'] = datetime.date.today()
         page = filter_form.submit()
         # 2 students returned
         self.assertTrue ('4_marks', page.forms[1].fields)
@@ -522,7 +522,7 @@ class CreateManyExamsViewTests(WebTest):
         filter_form['subject_name'] = 'Kiswahili'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'
-        filter_form['date_done'] = datetime.datetime.now()
+        filter_form['date_done'] = datetime.date.today()
         page = filter_form.submit()
         self.assertEqual(page.forms[1].id, 'students-exams-entry-form') # second form
 
@@ -539,7 +539,7 @@ class CreateManyExamsViewTests(WebTest):
         filter_form['subject_name'] = 'Kiswahili'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'
-        filter_form['date_done'] = datetime.datetime.now()
+        filter_form['date_done'] = datetime.date.today()
         page = filter_form.submit()
 
         # input marks for reg_no 4 and 5 in fixtures
@@ -547,6 +547,7 @@ class CreateManyExamsViewTests(WebTest):
         entry_form['4_marks'] = 99.99
         entry_form['5_marks'] = 00.00
         page = entry_form.submit()
+        # page.showbrowser()
         self.assertEqual(page.status_code, 200)
         self.assertContains(page, 'Data has been saved successfully.')
         returned_entry_form = page.forms['students-exams-entry-form']
@@ -573,7 +574,7 @@ class CreateManyExamsViewTests(WebTest):
         filter_form['subject_name'] = 'Kiswahili'
         filter_form['exam_type_name'] = 'CAT 2'
         filter_form['term_name'] = '2'
-        filter_form['date_done'] = datetime.datetime.now()
+        filter_form['date_done'] = datetime.date.today()
         page = filter_form.submit()
 
         # input incorrect marks for reg_no 4 and 5 in fixtures
@@ -637,7 +638,7 @@ class GenerateExamReportsFilterFormTests(TestCase):
             'term': '1',
         })
 
-        print(form.errors)
+        # print(form.errors)
         # self.assertTrue(form.is_valid())
 
 class GenerateExamReportsViewTests(WebTest):

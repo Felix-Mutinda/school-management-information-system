@@ -43,7 +43,7 @@ class StudentProfile(models.Model):
     stream = models.ForeignKey(Stream, on_delete=models.CASCADE)
     kcpe_marks = models.IntegerField(default=0, null=True, blank=True)
     house = models.CharField(max_length=20, blank=True)
-    date_registered = models.DateTimeField()
+    date_registered = models.DateField()
     
     def __str__(self):
         return '%s\'s Profile' % self.user.first_name
@@ -54,7 +54,7 @@ class StudentProfile(models.Model):
         date_registred. If year_since_registration is None,
         use the current year.
         '''
-        year_since_registration = year_since_registration or datetime.datetime.now().year
+        year_since_registration = year_since_registration or datetime.date.today().year
         return self.form + (year_since_registration - self.date_registered.year)
     
     def set_form(self, expected_form, year_registered):
@@ -64,7 +64,7 @@ class StudentProfile(models.Model):
         is what should be added to the year registered to give 
         expected form.
         '''
-        current_year = datetime.datetime.now().year
+        current_year = datetime.date.today().year
         self.form = expected_form - (current_year - year_registered)
         return self.form
 

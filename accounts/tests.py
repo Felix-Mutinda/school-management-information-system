@@ -106,7 +106,7 @@ class UserModelTests(TestCase):
             form='2',
             stream=Stream.objects.create(name='south'),
             house='house',
-            date_registered=timezone.now()
+            date_registered=datetime.date.today()
         )
         self.assertTrue(hasattr(student_user, 'student_profile'))
         self.assertEqual(student_user.student_profile.id, student_profile.id)
@@ -126,7 +126,7 @@ class UserModelTests(TestCase):
             form='2',
             stream=Stream.objects.create(name='north'),
             house='house',
-            date_registered=timezone.now()
+            date_registered=datetime.date.today()
         )
 
         # create a guardian and a guardian profile, then associate with above student
@@ -305,7 +305,7 @@ class StudentProfileFormTests(TestCase):
             'reg_no': '3594',
             'form': '1',
             'stream': Stream.objects.create(name='north'),
-            'date_registered': timezone.now()
+            'date_registered': datetime.date.today()
         })
         self.assertTrue(form.is_valid)
         student_user = create_user(is_student=True, username='student', password='pass')
@@ -322,7 +322,7 @@ class StudentProfileFormTests(TestCase):
             'reg_no': '3594',
             'form': '2',
             'stream': Stream.objects.create(name='north'),
-            'date_registered': timezone.now()
+            'date_registered': datetime.date.today()
         })
         self.assertTrue(form1.is_valid())
         student_user = create_user(is_student=True, username='student', password='pass')
@@ -334,7 +334,7 @@ class StudentProfileFormTests(TestCase):
             'reg_no': '3594',
             'form': '2',
             'stream': 'west',
-            'date_registered': timezone.now()
+            'date_registered': datetime.date.today()
         })
         self.assertFalse(form2.is_valid())
         self.assertEqual(form2.errors['reg_no'], ['This registration number is already taken.'])
@@ -574,7 +574,7 @@ class RegisterStudentViewTests(WebTest):
     #     page.form['student_last_name'] = 'last name'
     #     page.form['student_form'] = '1'
     #     page.form['student_stream_name'] = 7
-    #     page.form['student_date_registered'] = datetime.datetime.now()
+    #     page.form['student_date_registered'] = datetime.date.today()
     #     # page.showbrowser()
     #     page = page.form.submit()
     #     self.assertContains(page, 'This stream is not found.')
@@ -590,7 +590,7 @@ class RegisterStudentViewTests(WebTest):
         page.form['student_last_name'] = 'last name'
         page.form['student_form'] = 1
         page.form['student_stream_name'] = 'west'
-        page.form['student_date_registered'] = datetime.datetime.now()
+        page.form['student_date_registered'] = datetime.date.today()
         page.form['student_subjects_done_by_student'] = ['Python', 'Mathematics']
         # page.showbrowser()
         page = page.form.submit().follow()
@@ -610,7 +610,7 @@ class RegisterStudentViewTests(WebTest):
         page.form['student_last_name'] = 'last name'
         page.form['student_form'] = '1'
         page.form['student_stream_name'] = 'east'
-        page.form['student_date_registered'] = datetime.datetime.now()
+        page.form['student_date_registered'] = datetime.date.today()
         page.form['student_subjects_done_by_student'] = ['Python', 'Mathematics']
         page = page.form.submit().follow()
 
@@ -621,7 +621,7 @@ class RegisterStudentViewTests(WebTest):
         page.form['student_last_name'] = 'last name'
         page.form['student_form'] = '1'
         page.form['student_stream_name'] = 'east'
-        page.form['student_date_registered'] = datetime.datetime.now()
+        page.form['student_date_registered'] = datetime.date.today()
         page.form['student_subjects_done_by_student'] = ['Python', 'Mathematics']
         page = page.form.submit()
         # should report the error on same page, i.e. 200 not 302(success)
@@ -661,7 +661,7 @@ class RegisterStudentFormTests(TestCase):
             'student_last_name': 'last_name',
             'student_form': '2',
             'student_stream_name': 'east',
-            'student_date_registered': timezone.now(),
+            'student_date_registered': datetime.date.today(),
             'student_subjects_done_by_student': ['Python', 'Mathematics']
         })
         # print(form.errors)
@@ -684,7 +684,7 @@ class StudentProfileModelTests(TestCase):
             reg_no='8989',
             form=1,
             stream=Stream.objects.create(name='east'),
-            date_registered=timezone.now(),
+            date_registered=datetime.date.today(),
         )
         self.assertEqual(student_profile.get_form(2020), 1)
         self.assertEqual(student_profile.get_form(), 1)
@@ -706,7 +706,7 @@ class StudentProfileModelTests(TestCase):
             reg_no='8989',
             form=1,
             stream=Stream.objects.create(name='east'),
-            date_registered=timezone.now() - datetime.timedelta(days=365*3), #2017
+            date_registered=datetime.date.today() - datetime.timedelta(days=365*3), #2017
         )
         self.assertEqual(student_profile.set_form(4, 2017), 1)
         self.assertEqual(student_profile.get_form(), 4)
@@ -959,7 +959,7 @@ class UpdateStudentViewTests(WebTest):
         self.assertEqual(page.form['student_stream_name'].value, 'east')
         self.assertEqual(page.form['student_house'].value, 'house 7')
         self.assertEqual(page.form['student_kcpe_marks'].value, '7')
-        self.assertEqual(page.form['student_date_registered'].value, '2020-02-18 22:33:00')
+        self.assertEqual(page.form['student_date_registered'].value, '2020-02-18')
         self.assertEqual(page.form['guardian_first_name'].value, 'g-first')
         self.assertEqual(page.form['guardian_middle_name'].value, 'g-middle')
         self.assertEqual(page.form['guardian_last_name'].value, 'g-last')
@@ -979,7 +979,7 @@ class UpdateStudentViewTests(WebTest):
         page.form['student_stream_name'] = 'west'
         page.form['student_house'] = 'cube'
         page.form['student_kcpe_marks'] = '384'
-        page.form['student_date_registered'] = '2020-01-01 22:33:00'
+        page.form['student_date_registered'] = '2020-01-01'
         page.form['student_subjects_done_by_student'] = ['Python', 'Mathematics']
         page.form['guardian_first_name'] = 'new_g-first'
         page.form['guardian_middle_name'] = 'new_g-middle'
@@ -998,7 +998,7 @@ class UpdateStudentViewTests(WebTest):
         self.assertEqual(page.form['student_stream_name'].value, 'west')
         self.assertEqual(page.form['student_house'].value, 'cube')
         self.assertEqual(page.form['student_kcpe_marks'].value, '384')
-        self.assertEqual(page.form['student_date_registered'].value, '2020-01-01 22:33:00')
+        self.assertEqual(page.form['student_date_registered'].value, '2020-01-01')
         #self.assertEqual(page.form['student_subjects_done_by_student'], ['Python', 'Mathematics'])
         self.assertEqual(page.form['guardian_first_name'].value, 'new_g-first')
         self.assertEqual(page.form['guardian_middle_name'].value, 'new_g-middle')

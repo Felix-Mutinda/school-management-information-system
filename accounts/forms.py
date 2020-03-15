@@ -19,6 +19,14 @@ from exam_module.utils import get_objects_as_choices
 
 User = get_user_model()
 
+# use html5 type="date"
+class DateInput(forms.DateInput):
+    input_type = "date"
+
+    def __init__(self, **kwargs):
+        kwargs['format'] = '%Y-%m-%d'
+        super().__init__(**kwargs)
+
 class StaffLoginForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
@@ -211,7 +219,7 @@ class RegisterStudentForm(forms.Form):
     student_stream_name = forms.ModelChoiceField(label='Stream', widget=forms.Select, queryset=Stream.objects, empty_label=None, to_field_name='name')
     student_house = forms.CharField(label='Domitory/ House', required=False)
     student_kcpe_marks = forms.IntegerField(label='KCPE Marks', min_value=0, required=False)
-    student_date_registered = forms.DateTimeField(label='Date Registered', initial=datetime.datetime.now())
+    student_date_registered = forms.DateField(label='Date Registered', widget=DateInput, initial=datetime.date.today())
     # the subjects done by the student
     student_subjects_done_by_student = forms.ModelMultipleChoiceField(label='Select Subjects', widget=forms.CheckboxSelectMultiple, queryset=Subject.objects, to_field_name='name')
 

@@ -26,6 +26,14 @@ from .models import (
 
 from .utils import get_objects_as_choices
 
+# use html5 type="date"
+class DateInput(forms.DateInput):
+    input_type = 'date'
+
+    def __init__(self, **kwargs):
+        kwargs['format'] = '%Y-%m-%d'
+        super().__init__(**kwargs)
+
 class CreateExamForm(forms.Form):
     '''
     Handle higher level validity i.e. required fields
@@ -35,7 +43,7 @@ class CreateExamForm(forms.Form):
     subject_name = forms.ModelChoiceField(label="Subject", widget=forms.Select, queryset=Subject.objects, empty_label=None, to_field_name='name')
     exam_type_name = forms.ModelChoiceField(label="Exam Type", widget=forms.Select, queryset=ExamType.objects,  empty_label=None, to_field_name='name')
     term_name = forms.ModelChoiceField(label="Term", widget=forms.Select, queryset=Term.objects, empty_label=None, to_field_name='name')
-    date_done = forms.DateTimeField(widget=forms.DateTimeInput)
+    date_done = forms.DateField(widget=DateInput, initial=datetime.date.today())
     marks = forms.DecimalField(max_digits=4, decimal_places=2)
 
     def __init__(self, *args, **kwargs):
@@ -80,6 +88,9 @@ class CreateExamForm(forms.Form):
 
     def clean_subject_name(self):
         subject_name = self.cleaned_data.get('subject_name')
+        if subject_name.name == 'All':
+            raise forms.ValidationError('Select a single subject.')
+            
         try:
             subject = Subject.objects.get(name=subject_name)
         except Subject.DoesNotExist:
@@ -114,7 +125,7 @@ class CreateManyExamsFilterForm(forms.Form):
     subject_name = forms.ModelChoiceField(label='Subject', widget=forms.Select, queryset=Subject.objects, empty_label=None, to_field_name='name')
     exam_type_name = forms.ModelChoiceField(label='Exam Type', widget=forms.Select, queryset=ExamType.objects, empty_label=None, to_field_name='name')
     term_name = forms.ModelChoiceField(label='Term', widget=forms.Select, queryset=Term.objects, empty_label=None, to_field_name='name')
-    date_done = forms.DateTimeField(label='Date Done', widget=forms.DateTimeInput)
+    date_done = forms.DateField(label='Date Done', widget=DateInput, initial=datetime.date.today())
 
     def __init__(self, *args, **kwargs):
         '''
