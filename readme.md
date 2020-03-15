@@ -6,6 +6,6 @@
 A school management system with modules to manage students    
 details, staff details, exams and finance transactions.  
 
-Try it here: [App](http://smis.herokuapp.com)  
+Try it here: [App](http://highskool.herokuapp.com)  
     username: *admin*  
     password: *admin*     
